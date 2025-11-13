@@ -20,7 +20,74 @@ fi
 echo "🚀 Initializing API Validation Workflow"
 echo "========================================"
 
-# Step 0: Always clean up for a fresh start
+# Step 0: Build all required binaries and dependencies
+echo "🔨 Building dependencies..."
+echo ""
+
+# Build reporter binary
+echo "📦 Building reporter binary..."
+REPORTER_DIR="$(dirname "$REPORTER_BIN")"
+if [ -f "$REPORTER_DIR/go.mod" ]; then
+    (cd "$REPORTER_DIR" && go build -o reporter ./cmd/reporter)
+    if [ $? -eq 0 ]; then
+        echo "   ✅ Reporter binary built successfully"
+    else
+        echo "   ❌ Failed to build reporter binary"
+        exit 1
+    fi
+else
+    echo "   ❌ Reporter source not found at $REPORTER_DIR"
+    exit 1
+fi
+
+# Build proxy binary
+echo "📦 Building proxy binary..."
+PROXY_BIN_DIR="$PRROXY_BASE/proxy"
+if [ -f "$PROXY_BIN_DIR/go.mod" ]; then
+    (cd "$PROXY_BIN_DIR" && go build -o proxy-bin ./cmd/proxy)
+    if [ $? -eq 0 ]; then
+        echo "   ✅ Proxy binary built successfully"
+    else
+        echo "   ❌ Failed to build proxy binary"
+        exit 1
+    fi
+else
+    echo "   ⚠️  Proxy source not found at $PROXY_BIN_DIR (skipping)"
+fi
+
+# Build rest-v2 binary
+echo "📦 Building rest-v2 binary..."
+if [ -f "$REST_V2_DIR/go.mod" ]; then
+    (cd "$REST_V2_DIR" && go build -o rest-v2 ./cmd/server)
+    if [ $? -eq 0 ]; then
+        echo "   ✅ REST v2 binary built successfully"
+    else
+        echo "   ❌ Failed to build rest-v2 binary"
+        exit 1
+    fi
+else
+    echo "   ⚠️  REST v2 source not found at $REST_V2_DIR (skipping)"
+fi
+
+# Install Node.js dependencies for rest-v1
+echo "📦 Installing Node.js dependencies for rest-v1..."
+if [ -f "$REST_V1_DIR/package.json" ]; then
+    (cd "$REST_V1_DIR" && npm install --silent)
+    if [ $? -eq 0 ]; then
+        echo "   ✅ REST v1 dependencies installed"
+    else
+        echo "   ❌ Failed to install rest-v1 dependencies"
+        exit 1
+    fi
+else
+    echo "   ⚠️  REST v1 package.json not found at $REST_V1_DIR (skipping)"
+fi
+
+echo ""
+echo "✅ All dependencies built successfully!"
+echo ""
+
+# Step 1: Always clean up for a fresh start
 echo "🧹 Cleaning up for fresh initialization..."
 echo "   Removing tmp/ folder..."
 rm -rf "$TMP_DIR"
@@ -30,7 +97,7 @@ echo "   Removing recordings/ folder..."
 rm -rf "$RECORDINGS_DIR"
 echo ""
 
-# Step 1: Start services in record mode to capture v1 behavior
+# Step 2: Start services in record mode to capture v1 behavior
 echo "📹 Starting recording phase to capture v1 API behavior..."
 echo "   This will make real API calls to build our 'ground truth'"
 echo ""
@@ -42,13 +109,13 @@ PROXY_MODE=record ./start.sh
 echo "⏳ Waiting for services to initialize..."
 sleep 5
 
-# Step 2: Run the comprehensive test to capture behavior
+# Step 3: Run the comprehensive test to capture behavior
 echo ""
 echo "🧪 Running comprehensive tests to capture v1 behavior..."
 echo "   (This may take a few minutes)"
 ./run-reporter.sh config.comprehensive.json --max-failures 0
 
-# Step 3: Verify recordings were created
+# Step 4: Verify recordings were created
 echo ""
 echo "📊 Verifying recordings were captured..."
 RECORDING_COUNT=$(find "$RECORDINGS_DIR" -name "*.json" 2>/dev/null | wc -l)
