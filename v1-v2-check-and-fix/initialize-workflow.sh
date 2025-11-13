@@ -127,7 +127,7 @@ sleep 5
 echo ""
 echo "🧪 Running comprehensive tests to capture v1 behavior..."
 echo "   (This may take a few minutes)"
-./run-reporter.sh config.comprehensive.json --max-failures 0
+./run-reporter.sh "$CONFIG_FILE" --max-failures 0
 
 # Step 4: Verify recordings were created
 echo ""
@@ -137,7 +137,7 @@ if [ "$RECORDING_COUNT" -gt 0 ]; then
     echo "✅ Successfully captured $RECORDING_COUNT recordings!"
     echo ""
     echo "🎉 Initialization complete! You can now run tests in playback mode."
-    echo "   Next step: ./run-reporter.sh config.comprehensive.json"
+    echo "   Next step: ./run-reporter.sh $CONFIG_FILE"
 else
     echo "❌ Warning: No recordings were captured."
     echo "   Check the logs in $TMP_DIR folder for issues."

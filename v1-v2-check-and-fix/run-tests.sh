@@ -3,10 +3,21 @@
 # Generic test runner - used by test-record.sh and test-playback.sh
 # Usage: ./run-tests.sh <mode> [config_file]
 #   mode: record or playback
-#   config_file: optional config file (default: config.person-lookup.json)
+#   config_file: optional config file (default: from env CONFIG_FILE)
+
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Load environment variables from env file
+if [ -f "$SCRIPT_DIR/env" ]; then
+    set -a  # automatically export all variables
+    source "$SCRIPT_DIR/env"
+    set +a  # disable automatic export
+fi
 
 MODE=$1
-CONFIG_FILE="${2:-config.person-lookup.json}"
+TEST_CONFIG="${2:-$CONFIG_FILE}"
 
 if [ -z "$MODE" ]; then
     echo "Error: Mode not specified"
@@ -25,10 +36,6 @@ echo "Running tests in $MODE mode"
 echo "=========================================="
 echo ""
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
-
 # Stop any existing services
 echo "Step 1: Cleaning up any existing services..."
 ./remove.sh
@@ -46,8 +53,8 @@ echo ""
 
 # Run the reporter
 echo "Step 3: Running comparison tests..."
-echo "Using config: $CONFIG_FILE"
-./run-reporter.sh "$CONFIG_FILE"
+echo "Using config: $TEST_CONFIG"
+./run-reporter.sh "$TEST_CONFIG"
 TEST_RESULT=$?
 echo ""
 

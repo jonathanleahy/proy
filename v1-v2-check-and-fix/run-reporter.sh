@@ -6,14 +6,16 @@ cd "$SCRIPT_DIR"
 
 # Load environment variables from env file
 if [ -f "$SCRIPT_DIR/env" ]; then
-    export $(grep -v '^#' "$SCRIPT_DIR/env" | xargs)
+    set -a  # automatically export all variables
+    source "$SCRIPT_DIR/env"
+    set +a  # disable automatic export
 else
     echo "Error: env file not found. Please copy env.example to env and configure."
     exit 1
 fi
 
 # Configuration
-CONFIG_FILE="${1:-$SCRIPT_DIR/config.user-endpoints.json}"
+TEST_CONFIG="${1:-$SCRIPT_DIR/$CONFIG_FILE}"
 REPORTS_DIR="$SCRIPT_DIR/$REPORTS_DIR"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 REPORT_FILE="$REPORTS_DIR/report_${TIMESTAMP}.md"
@@ -30,8 +32,8 @@ if [ ! -f "$REPORTER_BIN" ]; then
 fi
 
 # Check if config file exists
-if [ ! -f "$CONFIG_FILE" ]; then
-    echo "Error: Config file not found: $CONFIG_FILE"
+if [ ! -f "$TEST_CONFIG" ]; then
+    echo "Error: Config file not found: $TEST_CONFIG"
     echo "Usage: $0 [config_file]"
     echo ""
     echo "Available configs:"
@@ -41,12 +43,12 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 echo "=== Running Reporter ==="
-echo "Config: $CONFIG_FILE"
+echo "Config: $TEST_CONFIG"
 echo "Output: $REPORT_FILE"
 echo ""
 
 # Run the reporter with individual endpoint reports enabled
-"$REPORTER_BIN" -config "$CONFIG_FILE" -output-dir "$REPORTS_DIR" | tee "$REPORT_FILE"
+"$REPORTER_BIN" -config "$TEST_CONFIG" -output-dir "$REPORTS_DIR" | tee "$REPORT_FILE"
 
 echo ""
 echo "=== Report saved to: $REPORT_FILE ==="

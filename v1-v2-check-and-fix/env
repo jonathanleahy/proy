@@ -40,6 +40,10 @@ RECORDINGS_DIR=./recordings
 REPORTS_DIR=./reports
 TMP_DIR=./tmp
 
+# Test Configuration File
+# Default test suite configuration
+CONFIG_FILE=config.comprehensive.json
+
 # Proxy Mode (record or playback)
 PROXY_MODE=playback
 
