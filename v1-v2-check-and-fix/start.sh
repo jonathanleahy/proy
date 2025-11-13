@@ -35,6 +35,53 @@ if [ -n "$CLI_CLEAN_RECORDINGS" ]; then
     CLEAN_RECORDINGS="$CLI_CLEAN_RECORDINGS"
 fi
 
+# Build all required binaries and dependencies
+echo "=== Building dependencies ==="
+
+# Build reporter binary (needed for testing)
+if [ ! -f "$REPORTER_BIN" ] || [ "$REPORTER_BIN" -ot "$(dirname "$REPORTER_BIN")/cmd/reporter/main.go" ]; then
+    echo "Building reporter binary..."
+    REPORTER_DIR="$(dirname "$REPORTER_BIN")"
+    if [ -f "$REPORTER_DIR/go.mod" ]; then
+        (cd "$REPORTER_DIR" && go build -o reporter ./cmd/reporter)
+        if [ $? -ne 0 ]; then
+            echo "❌ Failed to build reporter binary"
+            exit 1
+        fi
+        echo "✅ Reporter binary built"
+    fi
+fi
+
+# Build proxy binary (if not already built or source changed)
+PROXY_BIN_DIR="$PRROXY_BASE/proxy"
+PROXY_BIN="$PROXY_BIN_DIR/proxy-bin"
+if [ ! -f "$PROXY_BIN" ] || [ "$PROXY_BIN" -ot "$PROXY_BIN_DIR/cmd/proxy/main.go" ]; then
+    echo "Building proxy binary..."
+    if [ -f "$PROXY_BIN_DIR/go.mod" ]; then
+        (cd "$PROXY_BIN_DIR" && go build -o proxy-bin ./cmd/proxy)
+        if [ $? -ne 0 ]; then
+            echo "❌ Failed to build proxy binary"
+            exit 1
+        fi
+        echo "✅ Proxy binary built"
+    fi
+fi
+
+# Install Node.js dependencies if needed
+if [ -f "$REST_V1_DIR/package.json" ]; then
+    if [ ! -d "$REST_V1_DIR/node_modules" ]; then
+        echo "Installing Node.js dependencies for rest-v1..."
+        (cd "$REST_V1_DIR" && npm install --silent)
+        if [ $? -ne 0 ]; then
+            echo "❌ Failed to install rest-v1 dependencies"
+            exit 1
+        fi
+        echo "✅ REST v1 dependencies installed"
+    fi
+fi
+
+echo ""
+
 # Clean up reports for fresh test results (keep recordings for reuse)
 echo "=== Cleaning up old data ==="
 if [ -d "$REPORTS_DIR" ]; then
@@ -101,7 +148,7 @@ sleep 2
 # Start proxy in background
 echo "Starting proxy in $PROXY_MODE mode with recordings in $RECORDINGS_DIR_ABS..."
 cd "$PROXY_DIR_ABS"
-MODE=$PROXY_MODE go run ./cmd/proxy/main.go -recordings-dir="$RECORDINGS_DIR_ABS" > "$TMP_DIR/proxy.log" 2>&1 &
+MODE=$PROXY_MODE ./proxy-bin -recordings-dir="$RECORDINGS_DIR_ABS" > "$TMP_DIR/proxy.log" 2>&1 &
 PROXY_PID=$!
 echo "Proxy started (PID: $PROXY_PID)"
 
