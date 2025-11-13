@@ -1,0 +1,108 @@
+{
+  "base_url_v1": "http://0.0.0.0:3002",
+  "base_url_v2": "http://0.0.0.0:3004",
+  "iterations": 1,
+  "ignore_fields": [],
+  "endpoints": [
+    {
+      "path": "/api/person?surname=Thompson&dob=1985-03-15",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Anderson&dob=1990-07-22",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Martinez&dob=1988-11-08",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=O'Connor&dob=1992-01-30",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Rossi&dob=1987-05-14",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Schmidt&dob=1991-09-03",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Dubois&dob=1989-12-20",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Johnson&dob=1986-04-17",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Kowalski&dob=1993-08-25",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Silva&dob=1984-02-11",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Andersson&dob=1995-06-09",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Petrov&dob=1988-10-27",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Van%20Der%20Berg&dob=1990-03-05",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Kim&dob=1987-07-18",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Nguyen&dob=1992-11-12",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Wilson&dob=1989-01-24",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Brown&dob=1991-05-31",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Garcia&dob=1986-09-14",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Hansen&dob=1994-12-07",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Murphy&dob=1988-04-21",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Patel&dob=1990-08-16",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Müller&dob=1985-02-28",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Sato&dob=1993-06-03",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Taylor&dob=1987-10-19",
+      "method": "GET"
+    },
+    {
+      "path": "/api/person?surname=Leblanc&dob=1991-12-26",
+      "method": "GET"
+    }
+  ]
+}

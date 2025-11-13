@@ -1,0 +1,28 @@
+{
+  "base_url_v1": "http://0.0.0.0:3002",
+  "base_url_v2": "http://0.0.0.0:3004",
+  "iterations": 1,
+  "ignore_fields": [],
+  "endpoints": [
+    {
+      "path": "/api/people?dob=1985-03-15",
+      "method": "GET"
+    },
+    {
+      "path": "/api/people?dob=1990-07-22",
+      "method": "GET"
+    },
+    {
+      "path": "/api/people?dob=1988-11-08",
+      "method": "GET"
+    },
+    {
+      "path": "/api/people?dob=1987-05-14",
+      "method": "GET"
+    },
+    {
+      "path": "/api/people?dob=1991-09-03",
+      "method": "GET"
+    }
+  ]
+}

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP Testing Proxy Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(214.3 31.8% 91.4%)",
+                        input: "hsl(214.3 31.8% 91.4%)",
+                        ring: "hsl(221.2 83.2% 53.3%)",
+                        background: "hsl(0 0% 100%)",
+                        foreground: "hsl(222.2 84% 4.9%)",
+                        primary: {
+                            DEFAULT: "hsl(221.2 83.2% 53.3%)",
+                            foreground: "hsl(210 40% 98%)",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(210 40% 96.1%)",
+                            foreground: "hsl(222.2 47.4% 11.2%)",
+                        },
+                        destructive: {
+                            DEFAULT: "hsl(0 84.2% 60.2%)",
+                            foreground: "hsl(210 40% 98%)",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(210 40% 96.1%)",
+                            foreground: "hsl(215.4 16.3% 46.9%)",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(210 40% 96.1%)",
+                            foreground: "hsl(222.2 47.4% 11.2%)",
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .slide-panel {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .slide-panel.open {
+            transform: translateX(0);
+        }
+        .main-content {
+            transition: all 0.3s ease-in-out;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .main-content.pushed {
+            max-width: 50%;
+            margin-left: 0;
+            margin-right: auto;
+            padding-right: 1rem;
+        }
+        @media (max-width: 1024px) {
+            .main-content.pushed {
+                max-width: 33.333%;
+            }
+        }
+        @media (max-width: 768px) {
+            .main-content.pushed {
+                max-width: 0%;
+                padding-right: 0;
+                overflow: hidden;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-200 min-h-screen">
+    <div id="mainContent" class="container mx-auto p-4 max-w-7xl main-content">
+        <!-- Header -->
+        <header class="bg-background rounded-lg border border-border shadow-sm p-4 mb-4">
+            <h1 class="text-xl font-semibold text-foreground mb-2">HTTP Testing Proxy Dashboard</h1>
+            <div class="flex items-center justify-between bg-muted rounded-md p-2 text-sm">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span class="text-muted-foreground">Status: <strong class="text-foreground">Active</strong></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-muted-foreground">Mode:</span>
+                    <span id="current-mode" class="px-3 py-1 rounded-md text-xs font-medium bg-secondary text-secondary-foreground">playback</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-muted-foreground">Uptime:</span>
+                    <strong id="uptime" class="text-foreground">0s</strong>
+                </div>
+            </div>
+        </header>
+
+        <!-- Alert -->
+        <div id="alert" class="hidden mb-4 p-3 rounded-lg border"></div>
+
+        <!-- Stats and Controls -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <!-- Statistics Card -->
+            <div class="lg:col-span-2 bg-background rounded-lg border border-border shadow-sm p-4">
+                <h2 class="text-sm font-semibold text-foreground mb-3">Statistics</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-foreground" id="total-recordings">0</div>
+                        <div class="text-xs text-muted-foreground">Total Recordings</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-foreground" id="playback-hits">0</div>
+                        <div class="text-xs text-muted-foreground">Playback Hits</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-foreground" id="playback-misses">0</div>
+                        <div class="text-xs text-muted-foreground">Playback Misses</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-foreground" id="record-count">0</div>
+                        <div class="text-xs text-muted-foreground">Records This Session</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Card -->
+            <div class="bg-background rounded-lg border border-border shadow-sm p-4 flex flex-col justify-center">
+                <h2 class="text-sm font-semibold text-foreground mb-2">Controls</h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="switchMode('record')"
+                            class="px-2 py-1.5 text-xs font-medium rounded-md border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors">
+                        Record
+                    </button>
+                    <button onclick="switchMode('playback')"
+                            class="px-2 py-1.5 text-xs font-medium rounded-md border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors">
+                        Playback
+                    </button>
+                    <button onclick="refreshData()"
+                            class="px-2 py-1.5 text-xs font-medium rounded-md border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors">
+                        Refresh
+                    </button>
+                    <button onclick="clearRecordings()"
+                            class="px-2 py-1.5 text-xs font-medium rounded-md border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors">
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recordings Table -->
+        <div class="bg-background rounded-lg border border-border shadow-sm overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-slate-100 border-b border-border">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Timestamp</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Method</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Target</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Duration</th>
+                    </tr>
+                </thead>
+                <tbody id="recordings-body" class="divide-y divide-border">
+                    <tr>
+                        <td colspan="5" class="px-4 py-12 text-center text-muted-foreground">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-16 h-16 mb-4 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                                <p>No recordings yet. Switch to Record mode to start capturing requests.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Slide-out Panel -->
+    <div id="slidePanel" class="fixed inset-y-0 right-0 w-full md:w-2/3 lg:w-1/2 bg-background border-l border-border shadow-2xl z-50 slide-panel overflow-y-auto">
+        <div class="sticky top-0 bg-background border-b border-border px-6 py-4 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-foreground">Recording Details</h2>
+            <div class="flex items-center gap-2">
+                <button id="pinButton" onclick="togglePin()" class="px-2 py-1 text-xs font-medium rounded border border-border hover:bg-accent transition-colors" title="Pin panel open">
+                    📌 Pin
+                </button>
+                <button onclick="closePanel()" class="text-muted-foreground hover:text-foreground text-2xl font-bold">×</button>
+            </div>
+        </div>
+        <div id="panel-body" class="p-6">
+            <!-- Details will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Overlay removed - panels are always side-by-side -->
+
+    <script>
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port;
+        let isPinned = false;
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            if (type === 'success') {
+                alert.className = 'mb-4 p-3 rounded-lg border border-green-200 bg-green-50 text-green-800';
+            } else {
+                alert.className = 'mb-4 p-3 rounded-lg border border-destructive bg-destructive/10 text-destructive';
+            }
+            alert.textContent = message;
+            alert.classList.remove('hidden');
+            setTimeout(() => {
+                alert.classList.add('hidden');
+            }, 3000);
+        }
+
+        async function fetchStatus() {
+            try {
+                const response = await fetch(API_BASE + '/admin/status');
+                const data = await response.json();
+
+                // Update mode badge
+                const modeBadge = document.getElementById('current-mode');
+                modeBadge.textContent = data.mode;
+                if (data.mode === 'record') {
+                    modeBadge.className = 'px-3 py-1 rounded-md text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20';
+                } else {
+                    modeBadge.className = 'px-3 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20';
+                }
+
+                // Update statistics
+                document.getElementById('total-recordings').textContent = data.total_recordings || 0;
+                document.getElementById('playback-hits').textContent = data.playback_hits || 0;
+                document.getElementById('playback-misses').textContent = data.playback_misses || 0;
+                document.getElementById('record-count').textContent = data.record_count || 0;
+                document.getElementById('uptime').textContent = data.uptime || '0s';
+            } catch (error) {
+                console.error('Failed to fetch status:', error);
+            }
+        }
+
+        async function fetchRecordings() {
+            try {
+                const response = await fetch(API_BASE + '/admin/history');
+                const data = await response.json();
+
+                const tbody = document.getElementById('recordings-body');
+
+                if (data.history && data.history.length > 0) {
+                    tbody.innerHTML = data.history.map(rec => {
+                        const timestamp = new Date(rec.timestamp).toLocaleString();
+                        const statusClass = rec.status >= 200 && rec.status < 300 ? 'text-green-600' :
+                                           rec.status >= 300 && rec.status < 400 ? 'text-yellow-600' :
+                                           rec.status >= 400 && rec.status < 500 ? 'text-orange-600' : 'text-red-600';
+
+                        const methodColors = {
+                            GET: 'bg-green-500/10 text-green-700 border-green-200',
+                            POST: 'bg-blue-500/10 text-blue-700 border-blue-200',
+                            PUT: 'bg-yellow-500/10 text-yellow-700 border-yellow-200',
+                            DELETE: 'bg-red-500/10 text-red-700 border-red-200'
+                        };
+
+                        return `
+                            <tr onclick="showRecordingDetails('${rec.id}')" class="hover:bg-muted cursor-pointer transition-colors">
+                                <td class="px-4 py-3 text-sm text-foreground">${timestamp}</td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-1 text-xs font-medium rounded border ${methodColors[rec.method] || 'bg-gray-500/10 text-gray-700 border-gray-200'}">
+                                        ${rec.method}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-muted-foreground">${rec.target}</td>
+                                <td class="px-4 py-3">
+                                    <span class="font-medium ${statusClass}">${rec.status}</span>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-muted-foreground">${rec.duration}ms</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-4 py-12 text-center text-muted-foreground">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-16 h-16 mb-4 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
+                                    </svg>
+                                    <p>No recordings yet. Switch to Record mode to start capturing requests.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to fetch recordings:', error);
+            }
+        }
+
+        async function switchMode(mode) {
+            try {
+                const response = await fetch(API_BASE + '/admin/mode?mode=' + mode);
+
+                if (response.ok) {
+                    showAlert(`Switched to ${mode} mode`, 'success');
+                    refreshData();
+                } else {
+                    showAlert('Failed to switch mode', 'error');
+                }
+            } catch (error) {
+                showAlert('Error switching mode', 'error');
+                console.error('Failed to switch mode:', error);
+            }
+        }
+
+        async function showRecordingDetails(id) {
+            try {
+                const response = await fetch(API_BASE + '/admin/recording?id=' + id);
+                const data = await response.json();
+
+                // Helper to decode and parse body (may be base64 encoded)
+                function decodeBody(body) {
+                    if (!body) return '';
+                    try {
+                        const decoded = atob(body);
+                        try {
+                            return JSON.stringify(JSON.parse(decoded), null, 2);
+                        } catch {
+                            return decoded;
+                        }
+                    } catch {
+                        try {
+                            return JSON.stringify(JSON.parse(body), null, 2);
+                        } catch {
+                            return body;
+                        }
+                    }
+                }
+
+                const panelBody = document.getElementById('panel-body');
+                const requestBody = data.request.body ?
+                    `<div class="mt-3">
+                        <div class="text-sm font-semibold text-foreground mb-1">Body:</div>
+                        <pre class="bg-muted p-3 rounded border border-border text-xs overflow-x-auto">${decodeBody(data.request.body)}</pre>
+                    </div>` : '';
+                const responseBody = data.response.body ? decodeBody(data.response.body) : 'No body';
+
+                panelBody.innerHTML = `
+                    <div class="space-y-6">
+                        <!-- Request Section -->
+                        <div class="border-l-2 border-primary pl-4">
+                            <h3 class="text-lg font-semibold text-foreground mb-3">Request</h3>
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="text-sm font-semibold text-foreground">Method:</span>
+                                    <span class="ml-2 px-2 py-1 text-xs font-medium rounded border border-primary/20 bg-primary/10 text-primary">${data.request.method}</span>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-semibold text-foreground">URL:</span>
+                                    <code class="ml-2 text-sm text-muted-foreground">${data.request.url}</code>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-semibold text-foreground mb-1">Headers:</div>
+                                    <pre class="bg-muted p-3 rounded border border-border text-xs overflow-x-auto">${JSON.stringify(data.request.headers, null, 2)}</pre>
+                                </div>
+                                ${requestBody}
+                            </div>
+                        </div>
+
+                        <!-- Response Section -->
+                        <div class="border-l-2 border-green-500 pl-4">
+                            <h3 class="text-lg font-semibold text-foreground mb-3">Response</h3>
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="text-sm font-semibold text-foreground">Status:</span>
+                                    <span class="ml-2 px-2 py-1 text-xs font-medium rounded border ${
+                                        data.response.status_code >= 200 && data.response.status_code < 300 ? 'border-green-200 bg-green-50 text-green-700' :
+                                        data.response.status_code >= 400 ? 'border-red-200 bg-red-50 text-red-700' : 'border-yellow-200 bg-yellow-50 text-yellow-700'
+                                    }">${data.response.status_code}</span>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-semibold text-foreground mb-1">Headers:</div>
+                                    <pre class="bg-muted p-3 rounded border border-border text-xs overflow-x-auto">${JSON.stringify(data.response.headers, null, 2)}</pre>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-semibold text-foreground mb-1">Body:</div>
+                                    <pre class="bg-muted p-3 rounded border border-border text-xs overflow-x-auto">${responseBody}</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Metadata Section -->
+                        <div class="border-l-2 border-muted-foreground pl-4">
+                            <h3 class="text-lg font-semibold text-foreground mb-3">Metadata</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-foreground font-semibold">Target:</span>
+                                    <span class="text-muted-foreground">${data.metadata.target}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-foreground font-semibold">Duration:</span>
+                                    <span class="text-muted-foreground">${data.metadata.duration_ms}ms</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-foreground font-semibold">Timestamp:</span>
+                                    <span class="text-muted-foreground">${new Date(data.timestamp).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                openPanel();
+            } catch (error) {
+                showAlert('Failed to load recording details', 'error');
+                console.error('Failed to fetch recording details:', error);
+            }
+        }
+
+        function openPanel() {
+            document.getElementById('slidePanel').classList.add('open');
+            document.getElementById('mainContent').classList.add('pushed');
+        }
+
+        function closePanel() {
+            if (isPinned) return; // Don't close if pinned
+            document.getElementById('slidePanel').classList.remove('open');
+            document.getElementById('mainContent').classList.remove('pushed');
+        }
+
+        function togglePin() {
+            isPinned = !isPinned;
+            const pinButton = document.getElementById('pinButton');
+
+            if (isPinned) {
+                pinButton.textContent = '📍 Pinned';
+                pinButton.classList.add('bg-primary', 'text-primary-foreground');
+            } else {
+                pinButton.textContent = '📌 Pin';
+                pinButton.classList.remove('bg-primary', 'text-primary-foreground');
+            }
+        }
+
+        async function clearRecordings() {
+            if (!confirm('Are you sure you want to clear all recordings?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/admin/recordings', {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showAlert('All recordings cleared', 'success');
+                    refreshData();
+                } else {
+                    showAlert('Failed to clear recordings', 'error');
+                }
+            } catch (error) {
+                showAlert('Error clearing recordings', 'error');
+                console.error('Failed to clear recordings:', error);
+            }
+        }
+
+        function refreshData() {
+            fetchStatus();
+            fetchRecordings();
+        }
+
+        // Initial load and periodic refresh
+        refreshData();
+        setInterval(refreshData, 5000);
+    </script>
+</body>
+</html>

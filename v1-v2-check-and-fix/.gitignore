@@ -1,0 +1,11 @@
+# Recordings from proxy
+recordings/
+
+# Reporter output
+reports/
+
+# Log files
+*.log
+
+# PID files
+.*.pid

@@ -1,0 +1,55 @@
+# Build artifacts
+build/
+dist/
+*.class
+
+# Gradle
+.gradle/
+gradle/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Go
+vendor/
+*.test
+go.sum
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Binary files
+*.exe
+*.out
+*.app
+*.so
+*.dylib
+*.dll
+*.o
+*.obj
+*.fb
+proxy-bin
+reporter
+
+# Test outputs
+test-results/
+reports/*.md
+recordings/
+tmp/
+
+# Environment files
+.env
+.env.local

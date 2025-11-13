@@ -1,0 +1,28 @@
+{
+  "base_url_v1": "http://0.0.0.0:3002",
+  "base_url_v2": "http://0.0.0.0:3004",
+  "iterations": 1,
+  "ignore_fields": [],
+  "endpoints": [
+    {
+      "path": "/api/people?surname=Thompson",
+      "method": "GET"
+    },
+    {
+      "path": "/api/people?surname=Anderson",
+      "method": "GET"
+    },
+    {
+      "path": "/api/people?surname=Martinez",
+      "method": "GET"
+    },
+    {
+      "path": "/api/people?surname=Johnson",
+      "method": "GET"
+    },
+    {
+      "path": "/api/people?surname=Silva",
+      "method": "GET"
+    }
+  ]
+}

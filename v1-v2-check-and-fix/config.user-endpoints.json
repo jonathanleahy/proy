@@ -1,0 +1,65 @@
+{
+  "base_url_v1": "http://0.0.0.0:3002",
+  "base_url_v2": "http://0.0.0.0:3004",
+  "iterations": 1,
+  "ignore_fields": [
+    "generatedAt",
+    "timestamp"
+  ],
+  "endpoints": [
+    {
+      "path": "/api/user/1",
+      "method": "GET"
+    },
+    {
+      "path": "/api/user/2",
+      "method": "GET"
+    },
+    {
+      "path": "/api/user/3",
+      "method": "GET"
+    },
+    {
+      "path": "/api/user/4",
+      "method": "GET"
+    },
+    {
+      "path": "/api/user/5",
+      "method": "GET"
+    },
+    {
+      "path": "/api/user/1/summary",
+      "method": "GET"
+    },
+    {
+      "path": "/api/user/2/summary",
+      "method": "GET"
+    },
+    {
+      "path": "/api/user/3/summary",
+      "method": "GET"
+    },
+    {
+      "path": "/api/user/1/report",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "includeCompleted": true,
+        "maxPosts": 5
+      }
+    },
+    {
+      "path": "/api/user/2/report",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "includeCompleted": false,
+        "maxPosts": 3
+      }
+    }
+  ]
+}
