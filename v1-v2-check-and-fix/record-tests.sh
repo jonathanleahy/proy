@@ -120,6 +120,11 @@ echo "   Removing reports/ folder..."
 rm -rf "$REPORTS_DIR"
 echo "   Removing recordings/ folder..."
 rm -rf "$RECORDINGS_DIR"
+
+# Recreate directories
+mkdir -p "$TMP_DIR"
+mkdir -p "$REPORTS_DIR"
+mkdir -p "$RECORDINGS_DIR"
 echo ""
 
 # Step 2: Start services in record mode to capture v1 behavior
