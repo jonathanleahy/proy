@@ -144,13 +144,25 @@ echo "Starting with fresh reports, preserving existing recordings"
 # Rebuild rest-v1 after modifying source
 echo "Rebuilding rest-v1 with proxy configuration..."
 cd "$REST_V1_DIR"
-eval $REST_V1_BUILD_COMMAND > /dev/null 2>&1
+if eval $REST_V1_BUILD_COMMAND 2>&1 | tee "$SCRIPT_DIR/$TMP_DIR/rest-v1-build.log"; then
+    echo "✅ REST v1 build successful"
+else
+    echo "❌ REST v1 build failed! Check tmp/rest-v1-build.log for details"
+    tail -20 "$SCRIPT_DIR/$TMP_DIR/rest-v1-build.log"
+    exit 1
+fi
 cd "$SCRIPT_DIR"
 
 # Rebuild rest-v2 if needed
 echo "Rebuilding rest-v2 with proxy configuration..."
 cd "$REST_V2_DIR"
-go build -o rest-v2 "$REST_V2_BUILD_PATH" > /dev/null 2>&1
+if go build -o rest-v2 "$REST_V2_BUILD_PATH" 2>&1 | tee "$SCRIPT_DIR/$TMP_DIR/rest-v2-build.log"; then
+    echo "✅ REST v2 build successful"
+else
+    echo "❌ REST v2 build failed! Check tmp/rest-v2-build.log for details"
+    tail -20 "$SCRIPT_DIR/$TMP_DIR/rest-v2-build.log"
+    exit 1
+fi
 cd "$SCRIPT_DIR"
 
 # Convert relative paths to absolute paths
@@ -213,4 +225,90 @@ echo "REST v2:  PID $REST_V2_PID (log: tmp/rest-v2.log)"
 echo ""
 echo "Waiting 5 seconds for services to initialize..."
 sleep 5
+
+# Function to check if port is listening
+check_port() {
+    local port=$1
+    local service=$2
+    if lsof -i:$port -sTCP:LISTEN >/dev/null 2>&1; then
+        echo "✅ $service is listening on port $port"
+        return 0
+    else
+        echo "❌ $service is NOT listening on port $port"
+        return 1
+    fi
+}
+
+# Function to check if process is still running
+check_process() {
+    local pid=$1
+    local service=$2
+    if ps -p $pid > /dev/null 2>&1; then
+        echo "✅ $service process is running (PID: $pid)"
+        return 0
+    else
+        echo "❌ $service process has died (PID: $pid)"
+        return 1
+    fi
+}
+
+echo ""
+echo "=== Verifying Services ==="
+
+# Check processes
+ALL_RUNNING=true
+check_process $REST_EXTERNAL_USER_PID "REST external-user" || ALL_RUNNING=false
+check_process $PROXY_PID "Proxy" || ALL_RUNNING=false
+check_process $REST_V1_PID "REST v1" || ALL_RUNNING=false
+check_process $REST_V2_PID "REST v2" || ALL_RUNNING=false
+
+echo ""
+
+# Check ports
+check_port $REST_EXTERNAL_USER_PORT "REST external-user" || ALL_RUNNING=false
+check_port $PROXY_PORT "Proxy" || ALL_RUNNING=false
+check_port $REST_V1_PORT "REST v1" || ALL_RUNNING=false
+check_port $REST_V2_PORT "REST v2" || ALL_RUNNING=false
+
+echo ""
+
+if [ "$ALL_RUNNING" = false ]; then
+    echo "⚠️  WARNING: Some services failed to start properly!"
+    echo ""
+    echo "Check the logs for details:"
+    echo "  tail -50 tmp/rest-external-user.log"
+    echo "  tail -50 tmp/proxy.log"
+    echo "  tail -50 tmp/rest-v1.log"
+    echo "  tail -50 tmp/rest-v2.log"
+    echo ""
+    echo "Showing last 10 lines from each log:"
+    echo ""
+    echo "=== REST external-user log ==="
+    tail -10 tmp/rest-external-user.log 2>/dev/null || echo "No log available"
+    echo ""
+    echo "=== Proxy log ==="
+    tail -10 tmp/proxy.log 2>/dev/null || echo "No log available"
+    echo ""
+    echo "=== REST v1 log ==="
+    tail -10 tmp/rest-v1.log 2>/dev/null || echo "No log available"
+    echo ""
+    echo "=== REST v2 log ==="
+    tail -10 tmp/rest-v2.log 2>/dev/null || echo "No log available"
+    exit 1
+fi
+
+echo "🎉 All services started successfully!"
+echo ""
+echo "=== Service URLs ==="
+echo "REST v1:         http://localhost:$REST_V1_PORT"
+echo "REST v2:         http://localhost:$REST_V2_PORT"
+echo "External User:   http://localhost:$REST_EXTERNAL_USER_PORT"
+echo "Proxy:           http://localhost:$PROXY_PORT (mode: $PROXY_MODE)"
+echo ""
+echo "=== Example Endpoints ==="
+echo "REST v1 health:  curl http://localhost:$REST_V1_PORT/health"
+echo "REST v2 health:  curl http://localhost:$REST_V2_PORT/health"
+echo "REST v1 user:    curl http://localhost:$REST_V1_PORT/api/user/1"
+echo "REST v2 user:    curl http://localhost:$REST_V2_PORT/api/user/1"
+echo ""
 echo "Ready to run tests!"
