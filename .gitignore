@@ -43,6 +43,7 @@ Thumbs.db
 *.fb
 proxy-bin
 /reporter/reporter
+/v1-v2-check-and-fix/reporter
 
 # Test outputs
 test-results/
