@@ -43,7 +43,7 @@ if [ ! -f "$REPORTER_BIN" ] || [ "$REPORTER_BIN" -ot "$(dirname "$REPORTER_BIN")
     echo "Building reporter binary..."
     REPORTER_DIR="$(dirname "$REPORTER_BIN")"
     if [ -f "$REPORTER_DIR/go.mod" ]; then
-        (cd "$REPORTER_DIR" && go build -o reporter ./cmd/reporter)
+        (cd "$REPORTER_DIR" && go build -o reporter "$REPORTER_BUILD_PATH")
         if [ $? -ne 0 ]; then
             echo "❌ Failed to build reporter binary"
             exit 1
@@ -58,7 +58,7 @@ PROXY_BIN="$PROXY_BIN_DIR/proxy-bin"
 if [ ! -f "$PROXY_BIN" ] || [ "$PROXY_BIN" -ot "$PROXY_BIN_DIR/cmd/proxy/main.go" ]; then
     echo "Building proxy binary..."
     if [ -f "$PROXY_BIN_DIR/go.mod" ]; then
-        (cd "$PROXY_BIN_DIR" && go build -o proxy-bin ./cmd/proxy)
+        (cd "$PROXY_BIN_DIR" && go build -o proxy-bin "$PROXY_BUILD_PATH")
         if [ $? -ne 0 ]; then
             echo "❌ Failed to build proxy binary"
             exit 1
@@ -72,7 +72,7 @@ REST_EXTERNAL_USER_BIN="$REST_EXTERNAL_USER_DIR/rest-external-user"
 if [ ! -f "$REST_EXTERNAL_USER_BIN" ] || [ "$REST_EXTERNAL_USER_BIN" -ot "$REST_EXTERNAL_USER_DIR/cmd/server/main.go" ]; then
     echo "Building rest-external-user binary..."
     if [ -f "$REST_EXTERNAL_USER_DIR/go.mod" ]; then
-        (cd "$REST_EXTERNAL_USER_DIR" && go build -o rest-external-user ./cmd/server)
+        (cd "$REST_EXTERNAL_USER_DIR" && go build -o rest-external-user "$REST_EXTERNAL_USER_BUILD_PATH")
         if [ $? -ne 0 ]; then
             echo "❌ Failed to build rest-external-user binary"
             exit 1
@@ -139,7 +139,7 @@ cd "$SCRIPT_DIR"
 # Rebuild rest-v2 if needed
 echo "Rebuilding rest-v2 with proxy configuration..."
 cd "$REST_V2_DIR"
-go build -o rest-v2 ./cmd/server > /dev/null 2>&1
+go build -o rest-v2 "$REST_V2_BUILD_PATH" > /dev/null 2>&1
 cd "$SCRIPT_DIR"
 
 # Convert relative paths to absolute paths

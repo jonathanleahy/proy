@@ -28,7 +28,7 @@ echo ""
 echo "📦 Building reporter binary..."
 REPORTER_DIR="$(dirname "$REPORTER_BIN")"
 if [ -f "$REPORTER_DIR/go.mod" ]; then
-    (cd "$REPORTER_DIR" && go build -o reporter ./cmd/reporter)
+    (cd "$REPORTER_DIR" && go build -o reporter "$REPORTER_BUILD_PATH")
     if [ $? -eq 0 ]; then
         echo "   ✅ Reporter binary built successfully"
     else
@@ -44,7 +44,7 @@ fi
 echo "📦 Building proxy binary..."
 PROXY_BIN_DIR="$PRROXY_BASE/proxy"
 if [ -f "$PROXY_BIN_DIR/go.mod" ]; then
-    (cd "$PROXY_BIN_DIR" && go build -o proxy-bin ./cmd/proxy)
+    (cd "$PROXY_BIN_DIR" && go build -o proxy-bin "$PROXY_BUILD_PATH")
     if [ $? -eq 0 ]; then
         echo "   ✅ Proxy binary built successfully"
     else
@@ -58,7 +58,7 @@ fi
 # Build rest-v2 binary
 echo "📦 Building rest-v2 binary..."
 if [ -f "$REST_V2_DIR/go.mod" ]; then
-    (cd "$REST_V2_DIR" && go build -o rest-v2 ./cmd/server)
+    (cd "$REST_V2_DIR" && go build -o rest-v2 "$REST_V2_BUILD_PATH")
     if [ $? -eq 0 ]; then
         echo "   ✅ REST v2 binary built successfully"
     else
@@ -72,7 +72,7 @@ fi
 # Build rest-external-user binary
 echo "📦 Building rest-external-user binary..."
 if [ -f "$REST_EXTERNAL_USER_DIR/go.mod" ]; then
-    (cd "$REST_EXTERNAL_USER_DIR" && go build -o rest-external-user ./cmd/server)
+    (cd "$REST_EXTERNAL_USER_DIR" && go build -o rest-external-user "$REST_EXTERNAL_USER_BUILD_PATH")
     if [ $? -eq 0 ]; then
         echo "   ✅ REST external-user binary built successfully"
     else
