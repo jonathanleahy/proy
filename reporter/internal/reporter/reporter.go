@@ -107,6 +107,8 @@ func (r *Reporter) testEndpoint(endpoint config.Endpoint) EndpointReport {
 		V2Timings:  make([]time.Duration, 0, r.config.Iterations),
 	}
 
+	var v1RespBody, v2RespBody []byte
+
 	// Run iterations
 	for i := 0; i < r.config.Iterations; i++ {
 		// Call V1
@@ -118,6 +120,10 @@ func (r *Reporter) testEndpoint(endpoint config.Endpoint) EndpointReport {
 		}
 		epReport.V1Timings = append(epReport.V1Timings, v1Resp.Duration)
 		epReport.StatusCodeV1 = v1Resp.StatusCode
+		if i == 0 {
+			v1RespBody = v1Resp.Body
+			epReport.V1Request = v1Req
+		}
 
 		// Call V2
 		v2Req := r.buildRequest(r.config.BaseURLV2, endpoint)
@@ -128,6 +134,10 @@ func (r *Reporter) testEndpoint(endpoint config.Endpoint) EndpointReport {
 		}
 		epReport.V2Timings = append(epReport.V2Timings, v2Resp.Duration)
 		epReport.StatusCodeV2 = v2Resp.StatusCode
+		if i == 0 {
+			v2RespBody = v2Resp.Body
+			epReport.V2Request = v2Req
+		}
 
 		// Compare responses (only on first iteration to avoid noise)
 		if i == 0 {
@@ -137,6 +147,8 @@ func (r *Reporter) testEndpoint(endpoint config.Endpoint) EndpointReport {
 			})
 			epReport.Match = comparison.Match
 			epReport.Differences = comparison.Differences
+			epReport.V1ResponseBody = v1RespBody
+			epReport.V2ResponseBody = v2RespBody
 		}
 	}
 
@@ -278,6 +290,32 @@ func (r *Reporter) writeIndividualReports(index int, ep EndpointReport) {
 	if err := os.WriteFile(mdFilename, []byte(mdContent), 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing MD file %s: %v\n", mdFilename, err)
 	}
+
+	// Write V1 curl command
+	v1CurlFilename := fmt.Sprintf("%s/%s/%s-v1.curl.sh", r.outputDir, subdir, baseFilename)
+	v1CurlCmd := generateCurlCommand(ep.V1Request)
+	if err := os.WriteFile(v1CurlFilename, []byte(v1CurlCmd), 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing V1 curl file %s: %v\n", v1CurlFilename, err)
+	}
+
+	// Write V2 curl command
+	v2CurlFilename := fmt.Sprintf("%s/%s/%s-v2.curl.sh", r.outputDir, subdir, baseFilename)
+	v2CurlCmd := generateCurlCommand(ep.V2Request)
+	if err := os.WriteFile(v2CurlFilename, []byte(v2CurlCmd), 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing V2 curl file %s: %v\n", v2CurlFilename, err)
+	}
+
+	// Write V1 response
+	v1RespFilename := fmt.Sprintf("%s/%s/%s-v1.response.json", r.outputDir, subdir, baseFilename)
+	if err := os.WriteFile(v1RespFilename, ep.V1ResponseBody, 0644); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing V1 response file %s: %v\n", v1RespFilename, err)
+	}
+
+	// Write V2 response
+	v2RespFilename := fmt.Sprintf("%s/%s/%s-v2.response.json", r.outputDir, subdir, baseFilename)
+	if err := os.WriteFile(v2RespFilename, ep.V2ResponseBody, 0644); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing V2 response file %s: %v\n", v2RespFilename, err)
+	}
 }
 
 // sanitizePath converts a URL path to a safe filename
@@ -296,6 +334,42 @@ func sanitizePath(path string) string {
 		path = path[:80]
 	}
 	return path
+}
+
+// generateCurlCommand generates a curl command from a request
+func generateCurlCommand(req client.Request) string {
+	var cmd strings.Builder
+	cmd.WriteString("#!/bin/bash\n\n")
+	cmd.WriteString("# Auto-generated curl command\n\n")
+	cmd.WriteString(fmt.Sprintf("curl -X %s \\\n", req.Method))
+
+	// Add headers
+	for key, value := range req.Headers {
+		cmd.WriteString(fmt.Sprintf("  -H '%s: %s' \\\n", key, value))
+	}
+
+	// Add body if present
+	if len(req.Body) > 0 {
+		cmd.WriteString(fmt.Sprintf("  -d '%s' \\\n", string(req.Body)))
+	}
+
+	// Build full URL with query params
+	fullURL := req.URL
+	if len(req.QueryParams) > 0 {
+		separator := "?"
+		if strings.Contains(fullURL, "?") {
+			separator = "&"
+		}
+		params := make([]string, 0, len(req.QueryParams))
+		for key, value := range req.QueryParams {
+			params = append(params, fmt.Sprintf("%s=%s", key, value))
+		}
+		fullURL += separator + strings.Join(params, "&")
+	}
+
+	cmd.WriteString(fmt.Sprintf("  '%s'\n", fullURL))
+
+	return cmd.String()
 }
 
 // formatIndividualMarkdown formats a single endpoint report as Markdown
