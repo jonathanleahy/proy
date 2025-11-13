@@ -356,11 +356,28 @@ echo "REST v2 health:  curl http://localhost:$REST_V2_PORT/health"
 echo "REST v1 user:    curl http://localhost:$REST_V1_PORT/api/user/1"
 echo "REST v2 user:    curl http://localhost:$REST_V2_PORT/api/user/1"
 echo ""
-echo "Ready to run tests!"
+
+# Run tests automatically
+echo "=== Running Tests ==="
+echo "Using config: $CONFIG_FILE"
 echo ""
+./run-reporter.sh "$CONFIG_FILE"
+TEST_RESULT=$?
+
+echo ""
+echo "=== Test Summary ==="
+LATEST_REPORT=$(ls -t reports/*.md 2>/dev/null | head -1)
+if [ -f "$LATEST_REPORT" ]; then
+    echo "Report: $LATEST_REPORT"
+    echo ""
+    grep -E "^\\*\\*(Total|Matched|Failed)" "$LATEST_REPORT" | head -5
+fi
+echo ""
+
 echo "ℹ️  Services are running in the background"
 echo "   To stop all services: ./remove.sh"
 echo "   To view logs: tail -f tmp/*.log"
+echo "   To re-run tests: ./run-reporter.sh $CONFIG_FILE"
 echo ""
 echo "   Press Ctrl+C to exit (services will keep running)"
 echo ""
