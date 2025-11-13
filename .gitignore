@@ -15,7 +15,6 @@ yarn-error.log
 # Go
 vendor/
 *.test
-go.sum
 
 # Logs
 *.log
