@@ -31,6 +31,11 @@ set +a  # disable automatic export
 echo "🚀 Initializing API Validation Workflow"
 echo "========================================"
 
+# Make paths absolute
+RECORDINGS_DIR="$SCRIPT_DIR/$RECORDINGS_DIR"
+REPORTS_DIR="$SCRIPT_DIR/$REPORTS_DIR"
+TMP_DIR="$SCRIPT_DIR/$TMP_DIR"
+
 # Step 0: Build all required binaries and dependencies
 echo "🔨 Building dependencies..."
 echo ""
