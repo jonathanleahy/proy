@@ -144,11 +144,11 @@ echo "Starting with fresh reports, preserving existing recordings"
 # Rebuild rest-v1 after modifying source
 echo "Rebuilding rest-v1 with proxy configuration..."
 cd "$REST_V1_DIR"
-if eval $REST_V1_BUILD_COMMAND 2>&1 | tee "$SCRIPT_DIR/$TMP_DIR/rest-v1-build.log"; then
+if eval $REST_V1_BUILD_COMMAND 2>&1 | tee "$TMP_DIR/rest-v1-build.log"; then
     echo "✅ REST v1 build successful"
 else
     echo "❌ REST v1 build failed! Check tmp/rest-v1-build.log for details"
-    tail -20 "$SCRIPT_DIR/$TMP_DIR/rest-v1-build.log"
+    tail -20 "$TMP_DIR/rest-v1-build.log"
     exit 1
 fi
 cd "$SCRIPT_DIR"
@@ -156,11 +156,11 @@ cd "$SCRIPT_DIR"
 # Rebuild rest-v2 if needed
 echo "Rebuilding rest-v2 with proxy configuration..."
 cd "$REST_V2_DIR"
-if go build -o rest-v2 "$REST_V2_BUILD_PATH" 2>&1 | tee "$SCRIPT_DIR/$TMP_DIR/rest-v2-build.log"; then
+if go build -o rest-v2 "$REST_V2_BUILD_PATH" 2>&1 | tee "$TMP_DIR/rest-v2-build.log"; then
     echo "✅ REST v2 build successful"
 else
     echo "❌ REST v2 build failed! Check tmp/rest-v2-build.log for details"
-    tail -20 "$SCRIPT_DIR/$TMP_DIR/rest-v2-build.log"
+    tail -20 "$TMP_DIR/rest-v2-build.log"
     exit 1
 fi
 cd "$SCRIPT_DIR"
