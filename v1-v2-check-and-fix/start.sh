@@ -181,51 +181,68 @@ REST_EXTERNAL_USER_DIR_ABS="$(realpath "$REST_EXTERNAL_USER_DIR")"
 RECORDINGS_DIR_ABS="$(realpath "$RECORDINGS_DIR")"
 
 # Start rest-external-user first (needed by rest-v1)
-echo "Starting rest-external-user on port $REST_EXTERNAL_USER_PORT..."
-cd "$REST_EXTERNAL_USER_DIR_ABS"
-PORT=$REST_EXTERNAL_USER_PORT ./start.sh > "$TMP_DIR/rest-external-user.log" 2>&1 &
-REST_EXTERNAL_USER_PID=$!
-echo "REST external-user started (PID: $REST_EXTERNAL_USER_PID)"
-
-# Wait a moment for external service to start
-sleep 2
+if [ "${SKIP_REST_EXTERNAL_USER:-false}" = "true" ]; then
+    echo "⏭️  Skipping REST external-user (SKIP_REST_EXTERNAL_USER=true)"
+    REST_EXTERNAL_USER_PID=""
+else
+    echo "Starting rest-external-user on port $REST_EXTERNAL_USER_PORT..."
+    cd "$REST_EXTERNAL_USER_DIR_ABS"
+    PORT=$REST_EXTERNAL_USER_PORT ./start.sh > "$TMP_DIR/rest-external-user.log" 2>&1 &
+    REST_EXTERNAL_USER_PID=$!
+    echo "REST external-user started (PID: $REST_EXTERNAL_USER_PID)"
+    # Wait a moment for external service to start
+    sleep 2
+fi
 
 # Start proxy in background
-echo "Starting proxy in $PROXY_MODE mode with recordings in $RECORDINGS_DIR_ABS..."
-cd "$PROXY_DIR_ABS"
-MODE=$PROXY_MODE ./proxy-bin -recordings-dir="$RECORDINGS_DIR_ABS" > "$TMP_DIR/proxy.log" 2>&1 &
-PROXY_PID=$!
-echo "Proxy started (PID: $PROXY_PID)"
-
-# Wait a moment for proxy to start
-sleep 2
+if [ "${SKIP_PROXY:-false}" = "true" ]; then
+    echo "⏭️  Skipping Proxy (SKIP_PROXY=true)"
+    PROXY_PID=""
+else
+    echo "Starting proxy in $PROXY_MODE mode with recordings in $RECORDINGS_DIR_ABS..."
+    cd "$PROXY_DIR_ABS"
+    MODE=$PROXY_MODE ./proxy-bin -recordings-dir="$RECORDINGS_DIR_ABS" > "$TMP_DIR/proxy.log" 2>&1 &
+    PROXY_PID=$!
+    echo "Proxy started (PID: $PROXY_PID)"
+    # Wait a moment for proxy to start
+    sleep 2
+fi
 
 # Start rest-v1 in background
-echo "Starting rest-v1 on port $REST_V1_PORT..."
-cd "$REST_V1_DIR_ABS"
-if [ -n "$REST_V1_START_COMMAND" ]; then
-    echo "Using custom start command: $REST_V1_START_COMMAND"
-    PORT=$REST_V1_PORT eval $REST_V1_START_COMMAND > "$TMP_DIR/rest-v1.log" 2>&1 &
+if [ "${SKIP_REST_V1:-false}" = "true" ]; then
+    echo "⏭️  Skipping REST v1 (SKIP_REST_V1=true)"
+    REST_V1_PID=""
 else
-    PORT=$REST_V1_PORT ./start.sh > "$TMP_DIR/rest-v1.log" 2>&1 &
+    echo "Starting rest-v1 on port $REST_V1_PORT..."
+    cd "$REST_V1_DIR_ABS"
+    if [ -n "$REST_V1_START_COMMAND" ]; then
+        echo "Using custom start command: $REST_V1_START_COMMAND"
+        PORT=$REST_V1_PORT eval $REST_V1_START_COMMAND > "$TMP_DIR/rest-v1.log" 2>&1 &
+    else
+        PORT=$REST_V1_PORT ./start.sh > "$TMP_DIR/rest-v1.log" 2>&1 &
+    fi
+    REST_V1_PID=$!
+    echo "REST v1 started (PID: $REST_V1_PID)"
+    # Wait a moment
+    sleep 2
 fi
-REST_V1_PID=$!
-echo "REST v1 started (PID: $REST_V1_PID)"
-
-# Wait a moment
-sleep 2
 
 # Start rest-v2 in background
-echo "Starting rest-v2 on port $REST_V2_PORT..."
-cd "$REST_V2_DIR_ABS"
-if [ -n "$REST_V2_START_COMMAND" ]; then
-    echo "Using custom start command: $REST_V2_START_COMMAND"
-    PORT=$REST_V2_PORT eval $REST_V2_START_COMMAND > "$TMP_DIR/rest-v2.log" 2>&1 &
+if [ "${SKIP_REST_V2:-false}" = "true" ]; then
+    echo "⏭️  Skipping REST v2 (SKIP_REST_V2=true)"
+    REST_V2_PID=""
 else
-    PORT=$REST_V2_PORT ./start.sh > "$TMP_DIR/rest-v2.log" 2>&1 &
+    echo "Starting rest-v2 on port $REST_V2_PORT..."
+    cd "$REST_V2_DIR_ABS"
+    if [ -n "$REST_V2_START_COMMAND" ]; then
+        echo "Using custom start command: $REST_V2_START_COMMAND"
+        PORT=$REST_V2_PORT eval $REST_V2_START_COMMAND > "$TMP_DIR/rest-v2.log" 2>&1 &
+    else
+        PORT=$REST_V2_PORT ./start.sh > "$TMP_DIR/rest-v2.log" 2>&1 &
+    fi
+    REST_V2_PID=$!
+    echo "REST v2 started (PID: $REST_V2_PID)"
 fi
-REST_V2_PID=$!
-echo "REST v2 started (PID: $REST_V2_PID)"
 
 # Save PIDs
 cd "$SCRIPT_DIR"
@@ -275,18 +292,18 @@ echo "=== Verifying Services ==="
 
 # Check processes
 ALL_RUNNING=true
-check_process $REST_EXTERNAL_USER_PID "REST external-user" || ALL_RUNNING=false
-check_process $PROXY_PID "Proxy" || ALL_RUNNING=false
-check_process $REST_V1_PID "REST v1" || ALL_RUNNING=false
-check_process $REST_V2_PID "REST v2" || ALL_RUNNING=false
+[ -n "$REST_EXTERNAL_USER_PID" ] && { check_process $REST_EXTERNAL_USER_PID "REST external-user" || ALL_RUNNING=false; }
+[ -n "$PROXY_PID" ] && { check_process $PROXY_PID "Proxy" || ALL_RUNNING=false; }
+[ -n "$REST_V1_PID" ] && { check_process $REST_V1_PID "REST v1" || ALL_RUNNING=false; }
+[ -n "$REST_V2_PID" ] && { check_process $REST_V2_PID "REST v2" || ALL_RUNNING=false; }
 
 echo ""
 
 # Check ports
-check_port $REST_EXTERNAL_USER_PORT "REST external-user" || ALL_RUNNING=false
-check_port $PROXY_PORT "Proxy" || ALL_RUNNING=false
-check_port $REST_V1_PORT "REST v1" || ALL_RUNNING=false
-check_port $REST_V2_PORT "REST v2" || ALL_RUNNING=false
+[ -n "$REST_EXTERNAL_USER_PID" ] && { check_port $REST_EXTERNAL_USER_PORT "REST external-user" || ALL_RUNNING=false; }
+[ -n "$PROXY_PID" ] && { check_port $PROXY_PORT "Proxy" || ALL_RUNNING=false; }
+[ -n "$REST_V1_PID" ] && { check_port $REST_V1_PORT "REST v1" || ALL_RUNNING=false; }
+[ -n "$REST_V2_PID" ] && { check_port $REST_V2_PORT "REST v2" || ALL_RUNNING=false; }
 
 echo ""
 
