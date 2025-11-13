@@ -13,7 +13,7 @@ import {
 const PROXY_URL = process.env.PROXY_URL;
 const BASE_URL = PROXY_URL
   ? `${PROXY_URL}?target=jsonplaceholder.typicode.com`
-  : 'http://localhost:8099/proxy?target=https://jsonplaceholder.typicode.com';
+  : 'https://jsonplaceholder.typicode.com';
 
 // Configure axios to disable compression when using proxy
 // This ensures recordings are stored uncompressed for compatibility

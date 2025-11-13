@@ -4,8 +4,16 @@ recordings/
 # Reporter output
 reports/
 
+# Temporary files
+tmp/
+
 # Log files
 *.log
 
 # PID files
 .*.pid
+
+# Environment configuration
+# Note: OS-specific env files (env.linux, env.darwin) ARE tracked
+# Only the generic 'env' fallback is gitignored
+env

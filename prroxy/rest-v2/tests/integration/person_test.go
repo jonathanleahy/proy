@@ -62,6 +62,12 @@ func TestGetPerson_ResponseMatchesV1FieldNames(t *testing.T) {
 	_, hasSurnamea := body["surnamea"]
 	assert.True(t, hasSurname, "Response must include surname field to match v1")
 	assert.False(t, hasSurnamea, "Response must not include legacy surnamea field")
+
+	// CRITICAL: V1 uses "country" (singular), not "countries" (plural)
+	_, hasCountry := body["country"]
+	_, hasCountries := body["countries"]
+	assert.True(t, hasCountry, "Response must include 'country' field (singular) to match v1")
+	assert.False(t, hasCountries, "Response must NOT include 'countries' field (plural) - v1 uses singular")
 }
 
 func TestGetPerson_MissingParameters(t *testing.T) {
