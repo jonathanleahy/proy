@@ -75,6 +75,25 @@ cp env.example env.darwin
 
 All scripts automatically detect your OS and load the appropriate config. No manual switching needed!
 
+## Groovy/Spring API Setup
+
+If your REST v1 service is a Groovy/Spring Boot application (runs with `./gradlew run`), you need to create a start script:
+
+```bash
+# Copy the template
+cp templates/crm-api-start.sh.template ~/work/git-other/crm-api/start.sh
+
+# Make it executable
+chmod +x ~/work/git-other/crm-api/start.sh
+```
+
+The template handles:
+- Port configuration from environment variables
+- Running through Gradle with `./gradlew run --console=plain`
+- Proper output for logging
+
+See [templates/README.md](templates/README.md) for more details and customization options.
+
 ## Configuration for Different APIs
 
 Edit `start.sh` to point to your APIs:

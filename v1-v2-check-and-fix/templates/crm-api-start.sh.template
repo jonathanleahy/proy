@@ -1,0 +1,17 @@
+#!/bin/bash
+# Start script for Groovy/Spring CRM API
+# Copy this file to your CRM API root directory as start.sh
+#
+# Usage:
+#   cp templates/crm-api-start.sh.template ~/work/git-other/crm-api/start.sh
+#   chmod +x ~/work/git-other/crm-api/start.sh
+
+# Get port from environment or use default
+PORT=${PORT:-8002}
+
+# Export port for Spring Boot application
+export SERVER_PORT=$PORT
+
+# Run the application through Gradle
+echo "Starting CRM API on port $PORT..."
+./gradlew run --console=plain
