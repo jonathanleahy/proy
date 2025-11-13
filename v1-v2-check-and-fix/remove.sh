@@ -6,7 +6,9 @@ cd "$SCRIPT_DIR"
 
 # Load environment variables from env file
 if [ -f "$SCRIPT_DIR/env" ]; then
-    export $(grep -v '^#' "$SCRIPT_DIR/env" | xargs)
+    set -a  # automatically export all variables
+    source "$SCRIPT_DIR/env"
+    set +a  # disable automatic export
 else
     echo "Error: env file not found. Please copy env.example to env and configure."
     exit 1
