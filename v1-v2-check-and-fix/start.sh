@@ -133,7 +133,7 @@ echo "Starting with fresh reports, preserving existing recordings"
 # Rebuild rest-v1 after modifying source
 echo "Rebuilding rest-v1 with proxy configuration..."
 cd "$REST_V1_DIR"
-npm run build > /dev/null 2>&1
+eval $REST_V1_BUILD_COMMAND > /dev/null 2>&1
 cd "$SCRIPT_DIR"
 
 # Rebuild rest-v2 if needed
