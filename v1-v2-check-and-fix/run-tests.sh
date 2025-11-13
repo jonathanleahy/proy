@@ -52,7 +52,8 @@ echo ""
 
 # Start services in specified mode
 echo "Step 2: Starting services in $MODE mode..."
-PROXY_MODE=$MODE ./start.sh
+PROXY_MODE=$MODE ./start.sh &
+START_PID=$!
 echo ""
 
 # Wait a bit longer for services to fully initialize

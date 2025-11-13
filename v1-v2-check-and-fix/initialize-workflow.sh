@@ -125,7 +125,8 @@ echo "   This will make real API calls to build our 'ground truth'"
 echo ""
 
 echo "🔴 Starting services in RECORD mode..."
-PROXY_MODE=record ./start.sh
+PROXY_MODE=record ./start.sh &
+START_PID=$!
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to initialize..."

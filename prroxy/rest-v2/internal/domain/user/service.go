@@ -21,7 +21,7 @@ type Service struct {
 // NewService creates a new user service
 func NewService() *Service {
 	// Base URL - will be modified by add-target.sh to include proxy prefix
-	baseURL := "https://jsonplaceholder.typicode.com"
+	baseURL := "http://localhost:8099/proxy?target=https://jsonplaceholder.typicode.com"
 
 	return &Service{
 		baseURL: baseURL,

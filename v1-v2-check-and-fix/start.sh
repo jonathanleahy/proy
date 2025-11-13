@@ -322,6 +322,7 @@ echo "REST v1:         http://localhost:$REST_V1_PORT"
 echo "REST v2:         http://localhost:$REST_V2_PORT"
 echo "External User:   http://localhost:$REST_EXTERNAL_USER_PORT"
 echo "Proxy:           http://localhost:$PROXY_PORT (mode: $PROXY_MODE)"
+echo "Proxy Admin UI:  http://localhost:$PROXY_PORT/admin/ui"
 echo ""
 echo "=== Example Endpoints ==="
 echo "REST v1 health:  curl http://localhost:$REST_V1_PORT/health"
@@ -330,3 +331,17 @@ echo "REST v1 user:    curl http://localhost:$REST_V1_PORT/api/user/1"
 echo "REST v2 user:    curl http://localhost:$REST_V2_PORT/api/user/1"
 echo ""
 echo "Ready to run tests!"
+echo ""
+echo "ℹ️  Services are running in the background"
+echo "   To stop all services: ./remove.sh"
+echo "   To view logs: tail -f tmp/*.log"
+echo ""
+echo "   Press Ctrl+C to exit (services will keep running)"
+echo ""
+
+# Keep script running to prevent shell from killing background processes
+# User can Ctrl+C to exit, services will continue running
+trap 'echo ""; echo "Services still running. Use ./remove.sh to stop them."; exit 0' INT TERM
+
+# Wait indefinitely (or until user presses Ctrl+C)
+wait
