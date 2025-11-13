@@ -42,7 +42,7 @@ Thumbs.db
 *.obj
 *.fb
 proxy-bin
-reporter
+/reporter/reporter
 
 # Test outputs
 test-results/

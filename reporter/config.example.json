@@ -1,0 +1,30 @@
+{
+  "base_url_v1": "http://0.0.0.0:3000",
+  "base_url_v2": "http://0.0.0.0:8080",
+  "iterations": 5,
+  "ignore_fields": [
+    "generatedAt",
+    "timestamp"
+  ],
+  "endpoints": [
+    {
+      "path": "/api/user/1",
+      "method": "GET"
+    },
+    {
+      "path": "/api/user/1/summary",
+      "method": "GET"
+    },
+    {
+      "path": "/api/user/1/report",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "includeCompleted": true,
+        "maxPosts": 2
+      }
+    }
+  ]
+}
