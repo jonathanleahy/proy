@@ -11,35 +11,32 @@ Test and compare two REST API implementations using proxy recording and automate
 ## Quick Start
 
 ```bash
-# For AI assistants and automated workflows
-./initialize-workflow.sh
-./run-reporter.sh config.comprehensive.json
+# First time: Record v1 baseline behavior
+./record-tests.sh
 
-# Or use manual mode for more control
-PROXY_MODE=record ./start.sh
+# Daily development: Test v2 against recorded v1 baseline
+./play-tests.sh
+
+# Or run specific test configs
 ./run-reporter.sh config.person-lookup.json
 ./run-reporter.sh config.person-by-surname.json
-./run-reporter.sh config.person-by-dob.json
-
-# Playback mode (uses cached responses)
-./remove.sh
-PROXY_MODE=playback ./start.sh
-./run-reporter.sh config.comprehensive.json
 
 # View latest results
 cat reports/report_*.md | head -50
 ```
 
-**Test Modes**:
-- **test-record.sh**: Captures external API calls and stores in `recordings/` - use first time or to refresh data
-- **test-playback.sh**: Uses cached responses (no external calls) - faster, deterministic results
+**Scripts**:
+- **record-tests.sh**: Captures v1 API behavior as baseline (record mode) - use first time or to refresh baseline
+- **play-tests.sh**: Tests v2 against recorded v1 baseline (playback mode) - fast, no external calls
+- **test-record.sh**: Alternative for manual record mode control
+- **test-playback.sh**: Alternative for manual playback mode control
 
-Both scripts:
+All scripts:
 1. Clean up any existing services
 2. Start services in the appropriate mode
-3. Run comparison tests
+3. Run comparison tests automatically
 4. Show results summary
-5. Optionally keep services running for manual testing
+5. Keep services running for manual testing
 
 Results are saved in `reports/` with timestamps. Recordings are in `recordings/`.
 
@@ -96,7 +93,7 @@ REST_V1_START_COMMAND="./gradlew run --console=plain"
 
 ## Configuration for Different APIs
 
-Edit `start.sh` to point to your APIs:
+Edit your OS-specific env file (`env.linux` or `env.darwin`) to point to your APIs:
 
 ```bash
 # Your API locations and ports

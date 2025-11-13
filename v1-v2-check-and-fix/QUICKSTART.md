@@ -7,8 +7,8 @@
 ```bash
 cd v1-v2-check-and-fix
 
-# Initialize and capture V1 behavior (this will take a few minutes)
-./initialize-workflow.sh
+# Record v1 baseline behavior (this will take a few minutes)
+./record-tests.sh
 ```
 
 **What this does:**
@@ -38,28 +38,24 @@ cat reports/report_*.md | grep "❌"
 Once initialized, use this fast iteration cycle:
 
 ```bash
-# 1. Start services in playback mode (uses cached recordings)
-./start.sh
+# 1. Start services and run tests (playback mode - uses cached recordings)
+./play-tests.sh
 
-# 2. Run comparison
-./run-reporter.sh config.comprehensive.json
-
-# 3. Check what's failing
+# 2. Check what's failing
 cat reports/report_*.md | grep "❌"
 
-# 4. Fix code in rest-v2
+# 3. Fix code in rest-v2
 
-# 5. Rebuild
+# 4. Rebuild
 cd ../prroxy/rest-v2
 go build -o rest-v2 ./cmd/server
 cd ../../v1-v2-check-and-fix
 
-# 6. Restart and test
+# 5. Restart and test again
 ./remove.sh
-./start.sh
-./run-reporter.sh config.comprehensive.json
+./play-tests.sh
 
-# 7. Repeat until all endpoints pass
+# 6. Repeat until all endpoints pass
 ```
 
 ## 🤖 What to Say to AI Assistants
@@ -73,12 +69,12 @@ cd ../../v1-v2-check-and-fix
 
 | File | Purpose |
 |------|---------|
-| `initialize-workflow.sh` | Full reset + record V1 behavior |
-| `start.sh` | Start services (playback mode by default) |
-| `run-reporter.sh` | Run comparison tests |
+| `record-tests.sh` | Record v1 baseline (first time setup) |
+| `play-tests.sh` | Test v2 against v1 baseline (daily use) |
+| `run-reporter.sh` | Run comparison tests manually |
 | `remove.sh` | Stop all services |
 | `config.*.json` | Endpoint test configurations |
-| `env` | Service ports and paths |
+| `env.linux` / `env.darwin` | OS-specific service ports and paths |
 | `FIX-PROCESS.md` | **MANDATORY** TDD fix process |
 | `TESTING-WORKFLOW.md` | Detailed workflow documentation |
 
@@ -86,22 +82,19 @@ cd ../../v1-v2-check-and-fix
 
 ### Fresh Capture (V1 Changed)
 ```bash
-./initialize-workflow.sh
+./record-tests.sh
 ```
 
 ### Fast Development (Reuse Recordings)
 ```bash
-./start.sh                                    # Start in playback
-./run-reporter.sh config.comprehensive.json   # Run tests
+./play-tests.sh                               # Start + test in playback
 # ... fix code ...
-./remove.sh && ./start.sh                     # Restart
-./run-reporter.sh config.comprehensive.json   # Test again
+./remove.sh && ./play-tests.sh                # Restart + test again
 ```
 
 ### Record Fresh Data (Force)
 ```bash
-PROXY_MODE=record ./start.sh                  # Override to record mode
-./run-reporter.sh config.comprehensive.json
+PROXY_MODE=record ./play-tests.sh             # Override to record mode
 ```
 
 ### Test Specific Endpoints
@@ -117,23 +110,25 @@ cp config.comprehensive.json config.my-test.json
 **Workflow:**
 ```
 ┌─────────────────────┐
-│ initialize-workflow │  ← First time: Capture V1 behavior
+│   record-tests.sh   │  ← First time: Capture V1 behavior
 └──────────┬──────────┘
            │
            ├─→ RECORD mode: V1 responses saved
            ├─→ Creates recordings/
+           ├─→ Runs tests automatically
            └─→ Generates first report
 
 ┌─────────────────────┐
-│      start.sh       │  ← Development: Fast iteration
+│   play-tests.sh     │  ← Development: Fast iteration
 └──────────┬──────────┘
            │
            ├─→ PLAYBACK mode: Uses recordings
            ├─→ No external API calls
+           ├─→ Runs tests automatically
            └─→ Very fast testing
 
 ┌─────────────────────┐
-│   run-reporter.sh   │  ← Compare V1 vs V2
+│   run-reporter.sh   │  ← Manual test execution
 └──────────┬──────────┘
            │
            ├─→ Calls both APIs
@@ -162,10 +157,10 @@ Your V2 API is ready when:
 To adapt this framework for your APIs:
 
 1. **Copy the framework** to your project
-2. **Update `env` file** with your service paths and ports
+2. **Update OS-specific env file** (`env.linux` or `env.darwin`) with your service paths and ports
 3. **Create config files** listing your endpoints
-4. **Modify `start.sh`** if your services have different startup commands
-5. **Run `initialize-workflow.sh`** to capture your V1 behavior
+4. **Set custom start commands** in env file if needed (e.g., `REST_V1_START_COMMAND="./gradlew run"`)
+5. **Run `./record-tests.sh`** to capture your V1 behavior
 6. **Follow the fix process** in FIX-PROCESS.md
 
 See the main README for detailed configuration instructions.

@@ -34,7 +34,7 @@ RECORDINGS_DIR="$SCRIPT_DIR/$RECORDINGS_DIR"
 REPORTS_DIR="$SCRIPT_DIR/$REPORTS_DIR"
 TMP_DIR="$SCRIPT_DIR/$TMP_DIR"
 
-# Force playback mode by default for start.sh (CLI can override)
+# Force playback mode by default for play-tests.sh (CLI can override)
 if [ -n "$CLI_PROXY_MODE" ]; then
     PROXY_MODE="$CLI_PROXY_MODE"
 else
@@ -132,7 +132,7 @@ if [ "$CLEAN_RECORDINGS" = "true" ]; then
 fi
 
 echo "=== Starting services ==="
-echo "Proxy mode: $PROXY_MODE (playback by default, use PROXY_MODE=record ./start.sh to record)"
+echo "Proxy mode: $PROXY_MODE (playback by default, use PROXY_MODE=record ./play-tests.sh to record)"
 echo "Starting with fresh reports, preserving existing recordings"
 
 ./remove.sh

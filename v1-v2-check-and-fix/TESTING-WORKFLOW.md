@@ -26,44 +26,38 @@ This guide walks you through a proven process to:
 
 | Script | Purpose | When to Run |
 |--------|---------|------------|
-| `./initialize-workflow.sh` | Auto-detects if recordings exist; starts in playback mode if they do, or record mode if they don't. Handles setup completely. | First time setup, or after clean reset |
-| `PROXY_MODE=playback ./start.sh` | Starts services in playback mode using cached recordings (fast iteration) | Development loop - fixing endpoints |
-| `./run-reporter.sh config.comprehensive.json` | Runs the comprehensive test suite and generates a report showing which endpoints pass/fail | After changes to see current state |
+| `./record-tests.sh` | Records v1 baseline behavior in RECORD mode, runs tests automatically | First time setup, or when v1 changes |
+| `./play-tests.sh` | Starts services in PLAYBACK mode, runs tests automatically (fast iteration) | Development loop - fixing endpoints |
+| `./run-reporter.sh config.comprehensive.json` | Manually runs specific test suite and generates a report showing which endpoints pass/fail | When you want to test without restarting services |
 | `./remove.sh` | Stops all running services | When you need to clean up |
 
 **AI Workflow (Automatic - USE THESE):**
 ```bash
-# Step 1: Initialize (auto-detects mode)
+# Step 1: First time - record v1 baseline
 cd v1-v2-check-and-fix
-./initialize-workflow.sh
+./record-tests.sh
 
-# Step 2: Run reporter to see current failures
-./run-reporter.sh config.comprehensive.json
+# Step 2: Development loop - test v2 against v1 baseline
+./play-tests.sh
 
 # Step 3: When fixing (repeat this cycle):
 # - Make code changes to rest-v2
 # - Rebuild: cd ../prroxy/rest-v2 && go build -o rest-v2 ./cmd/server
-# - Run reporter to check progress
-./run-reporter.sh config.comprehensive.json
+# - Test again
+./remove.sh
+./play-tests.sh
 ```
 
 **Manual Version (if you prefer to do it step-by-step):**
 ```bash
-# Step 1: Clean up
-./remove.sh
+# Step 1: First time - record v1 behavior
+./record-tests.sh
 
-# Step 2: Start in record mode (first time only - captures v1 behavior)
-PROXY_MODE=record ./start.sh
-sleep 5
-
-# Step 3: Capture behavior
-./run-reporter.sh config.comprehensive.json
-
-# Step 4: Development loop - fix one endpoint at a time
-./remove.sh
-PROXY_MODE=playback ./start.sh
+# Step 2: Development loop - fix one endpoint at a time
+./play-tests.sh
 # ... make code changes ...
-./run-reporter.sh config.comprehensive.json
+./remove.sh
+./play-tests.sh
 ```
 
 **⚠️ IMPORTANT:** AI should use the automatic workflow with scripts. Do not go off on your own and implement manually - the scripts handle all the complexity.
@@ -89,24 +83,21 @@ First things first – we need to get all the pieces talking to each other. Thin
 
 ```bash
 cd v1-v2-check-and-fix
-./initialize-workflow.sh
+./record-tests.sh
 ```
 
 **What this does:**
 - 🧹 Always cleans up old runtime files (tmp/, reports/, recordings/) for a fresh start
-- 📹 Starts in record mode and captures fresh v1 behavior
+- 📹 Starts in RECORD mode and captures fresh v1 behavior
+- 🧪 Runs tests automatically to generate baseline
 - 🎯 Ensures you start with a clean slate every time
 
 **Alternatively, you can do it manually:**
 ```bash
 # Start in record mode (captures v1 behavior)
-PROXY_MODE=record ./start.sh
+PROXY_MODE=record ./play-tests.sh
 
-# Wait for services to start
-sleep 5
-
-# Run tests to capture behavior
-./run-reporter.sh config.comprehensive.json
+# Tests run automatically, wait for completion
 ```
 
 You'll see some logging output as services start up. This is good – it means things are happening. The system is now:
@@ -242,8 +233,7 @@ Now we make sure your fix works in the complete environment and doesn't break an
 ```bash
 cd v1-v2-check-and-fix
 ./remove.sh
-PROXY_MODE=playback ./start.sh
-./run-reporter.sh config.comprehensive.json
+./play-tests.sh
 ```
 
 **What to look for:**
@@ -286,7 +276,8 @@ Look at your latest report, pick the next failure, and repeat the cycle. Each on
 
 **Record Mode** (for capturing behavior):
 ```bash
-PROXY_MODE=record ./start.sh
+./record-tests.sh
+# Or manually: PROXY_MODE=record ./play-tests.sh
 ```
 - Makes real API calls to capture actual behavior
 - Slower but necessary for accuracy
@@ -294,18 +285,19 @@ PROXY_MODE=record ./start.sh
 
 **Playback Mode** (for development):
 ```bash
-PROXY_MODE=playback ./start.sh
+./play-tests.sh
 ```
 - Uses cached responses – much faster
 - Perfect for iterative development
 - No external dependencies
+- Tests run automatically
 
 ### Starting Fresh
 
-The `initialize-workflow.sh` script **always** cleans up and starts fresh every time:
+The `record-tests.sh` script **always** cleans up and starts fresh every time:
 
 ```bash
-./initialize-workflow.sh
+./record-tests.sh
 ```
 
 This ensures you always have clean recordings captured from v1. There's no need for special flags - it's the default behavior.
@@ -316,13 +308,13 @@ This ensures you always have clean recordings captured from v1. There's no need 
 
 **The ones you'll use constantly:**
 ```bash
-# Initialize workflow (first time or fresh start)
-./initialize-workflow.sh
+# Record v1 baseline (first time or fresh start)
+./record-tests.sh
 
-# Start services (most common)
-PROXY_MODE=playback ./start.sh
+# Test v2 against v1 baseline (most common - daily development)
+./play-tests.sh
 
-# Run comparison tests
+# Run comparison tests manually
 ./run-reporter.sh config.comprehensive.json
 
 # Stop everything

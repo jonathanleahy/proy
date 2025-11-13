@@ -98,8 +98,7 @@ Verify the fix works in the complete environment:
 ```bash
 cd v1-v2-check-and-fix
 ./remove.sh                              # Clean up
-PROXY_MODE=playback ./start.sh          # Start with cached responses
-./run-reporter.sh config.comprehensive.json  # Run full comparison
+./play-tests.sh                          # Start in playback + run tests
 ```
 
 **Check the report:**
@@ -141,8 +140,7 @@ This shows all failing endpoints. Pick one and follow the process above.
 ```bash
 # 1. See what's failing
 cd v1-v2-check-and-fix
-./initialize-workflow.sh
-./run-reporter.sh config.comprehensive.json
+./play-tests.sh                          # Test v2 against v1 baseline
 cat reports/report_*.md | grep "❌"
 
 # 2. Start fixing (example: user summary endpoint)
@@ -166,7 +164,7 @@ go test ./tests/integration -v -run TestUserSummary  # Should PASS
 # 7. Full system check
 cd ../../..  # Back to v1-v2-check-and-fix
 ./remove.sh
-PROXY_MODE=playback ./start.sh
+./play-tests.sh                          # Test again
 ./run-reporter.sh config.comprehensive.json
 # Check report - your endpoint should now be ✅
 

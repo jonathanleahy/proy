@@ -52,7 +52,7 @@ echo ""
 
 # Start services in specified mode
 echo "Step 2: Starting services in $MODE mode..."
-PROXY_MODE=$MODE ./start.sh &
+PROXY_MODE=$MODE ./play-tests.sh &
 START_PID=$!
 echo ""
 
