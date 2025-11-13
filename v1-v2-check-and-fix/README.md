@@ -75,24 +75,24 @@ cp env.example env.darwin
 
 All scripts automatically detect your OS and load the appropriate config. No manual switching needed!
 
-## Groovy/Spring API Setup
+## Custom Service Startup
 
-If your REST v1 service is a Groovy/Spring Boot application (runs with `./gradlew run`), you need to create a start script:
+If your REST service uses a custom startup method (e.g., Groovy/Spring apps that run with `./gradlew run`), configure it in your env file:
 
+**In `env.darwin` (or `env.linux`):**
 ```bash
-# Copy the template
-cp templates/crm-api-start.sh.template ~/work/git-other/crm-api/start.sh
+# For Gradle-based apps
+REST_V1_START_COMMAND="./gradlew run --console=plain"
 
-# Make it executable
-chmod +x ~/work/git-other/crm-api/start.sh
+# For other custom starts
+# REST_V2_START_COMMAND="python manage.py runserver"
 ```
 
-The template handles:
-- Port configuration from environment variables
-- Running through Gradle with `./gradlew run --console=plain`
-- Proper output for logging
-
-See [templates/README.md](templates/README.md) for more details and customization options.
+**How it works:**
+- If `REST_V1_START_COMMAND` is set, uses that command to start the service
+- If not set, defaults to `./start.sh` in the service directory
+- PORT environment variable is automatically passed to the command
+- No template files needed - all configuration stays in git
 
 ## Configuration for Different APIs
 

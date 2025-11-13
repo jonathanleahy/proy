@@ -203,7 +203,12 @@ sleep 2
 # Start rest-v1 in background
 echo "Starting rest-v1 on port $REST_V1_PORT..."
 cd "$REST_V1_DIR_ABS"
-PORT=$REST_V1_PORT ./start.sh > "$TMP_DIR/rest-v1.log" 2>&1 &
+if [ -n "$REST_V1_START_COMMAND" ]; then
+    echo "Using custom start command: $REST_V1_START_COMMAND"
+    PORT=$REST_V1_PORT eval $REST_V1_START_COMMAND > "$TMP_DIR/rest-v1.log" 2>&1 &
+else
+    PORT=$REST_V1_PORT ./start.sh > "$TMP_DIR/rest-v1.log" 2>&1 &
+fi
 REST_V1_PID=$!
 echo "REST v1 started (PID: $REST_V1_PID)"
 
@@ -213,7 +218,12 @@ sleep 2
 # Start rest-v2 in background
 echo "Starting rest-v2 on port $REST_V2_PORT..."
 cd "$REST_V2_DIR_ABS"
-PORT=$REST_V2_PORT ./start.sh > "$TMP_DIR/rest-v2.log" 2>&1 &
+if [ -n "$REST_V2_START_COMMAND" ]; then
+    echo "Using custom start command: $REST_V2_START_COMMAND"
+    PORT=$REST_V2_PORT eval $REST_V2_START_COMMAND > "$TMP_DIR/rest-v2.log" 2>&1 &
+else
+    PORT=$REST_V2_PORT ./start.sh > "$TMP_DIR/rest-v2.log" 2>&1 &
+fi
 REST_V2_PID=$!
 echo "REST v2 started (PID: $REST_V2_PID)"
 
