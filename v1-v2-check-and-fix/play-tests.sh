@@ -4,6 +4,9 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Clean up services on Ctrl+C
+trap 'echo ""; echo "🛑 Interrupted! Cleaning up services..."; ./remove.sh; exit 1' INT TERM
+
 # Preserve CLI overrides so we can re-apply after sourcing env
 CLI_PROXY_MODE="${PROXY_MODE:-}"
 CLI_CLEAN_RECORDINGS="${CLEAN_RECORDINGS:-}"
@@ -374,17 +377,9 @@ if [ -f "$LATEST_REPORT" ]; then
 fi
 echo ""
 
-echo "ℹ️  Services are running in the background"
+echo "ℹ️  Tests complete!"
+echo "   Services started successfully"
 echo "   To stop all services: ./remove.sh"
 echo "   To view logs: tail -f tmp/*.log"
 echo "   To re-run tests: ./run-reporter.sh $CONFIG_FILE"
 echo ""
-echo "   Press Ctrl+C to exit (services will keep running)"
-echo ""
-
-# Keep script running to prevent shell from killing background processes
-# User can Ctrl+C to exit, services will continue running
-trap 'echo ""; echo "Services still running. Use ./remove.sh to stop them."; exit 0' INT TERM
-
-# Wait indefinitely (or until user presses Ctrl+C)
-wait

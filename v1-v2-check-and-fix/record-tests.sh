@@ -7,6 +7,9 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Clean up services on Ctrl+C
+trap 'echo ""; echo "🛑 Interrupted! Cleaning up services..."; ./remove.sh; exit 1' INT TERM
+
 # Load environment variables from OS-specific env file
 OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
 ENV_FILE=""
@@ -124,9 +127,90 @@ echo "📹 Starting recording phase to capture v1 API behavior..."
 echo "   This will make real API calls to build our 'ground truth'"
 echo ""
 
+# Force record mode
+PROXY_MODE="record"
+
 echo "🔴 Starting services in RECORD mode..."
-PROXY_MODE=record ./play-tests.sh &
-START_PID=$!
+./remove.sh
+
+# point rest-v1 and rest-v2 to the 'proxy' target URLs
+../utils/add-target.sh "$REST_V1_CONFIG" add
+../utils/add-target.sh "$REST_V2_CONFIG" add
+
+# Convert relative paths to absolute paths
+PROXY_DIR_ABS="$(realpath "$PROXY_DIR")"
+REST_V1_DIR_ABS="$(realpath "$REST_V1_DIR")"
+REST_V2_DIR_ABS="$(realpath "$REST_V2_DIR")"
+REST_EXTERNAL_USER_DIR_ABS="$(realpath "$REST_EXTERNAL_USER_DIR")"
+RECORDINGS_DIR_ABS="$(realpath "$RECORDINGS_DIR")"
+
+# Start rest-external-user first (needed by rest-v1)
+if [ "${SKIP_REST_EXTERNAL_USER:-false}" = "true" ]; then
+    echo "⏭️  Skipping REST external-user (SKIP_REST_EXTERNAL_USER=true)"
+    REST_EXTERNAL_USER_PID=""
+else
+    echo "Starting rest-external-user on port $REST_EXTERNAL_USER_PORT..."
+    cd "$REST_EXTERNAL_USER_DIR_ABS"
+    PORT=$REST_EXTERNAL_USER_PORT ./start.sh > "$TMP_DIR/rest-external-user.log" 2>&1 &
+    REST_EXTERNAL_USER_PID=$!
+    echo "REST external-user started (PID: $REST_EXTERNAL_USER_PID)"
+    sleep 2
+fi
+
+# Start proxy in background (RECORD MODE)
+if [ "${SKIP_PROXY:-false}" = "true" ]; then
+    echo "⏭️  Skipping Proxy (SKIP_PROXY=true)"
+    PROXY_PID=""
+else
+    echo "Starting proxy in RECORD mode with recordings in $RECORDINGS_DIR_ABS..."
+    cd "$PROXY_DIR_ABS"
+    MODE=$PROXY_MODE ./proxy-bin -recordings-dir="$RECORDINGS_DIR_ABS" > "$TMP_DIR/proxy.log" 2>&1 &
+    PROXY_PID=$!
+    echo "Proxy started (PID: $PROXY_PID)"
+    sleep 2
+fi
+
+# Start rest-v1 in background
+if [ "${SKIP_REST_V1:-false}" = "true" ]; then
+    echo "⏭️  Skipping REST v1 (SKIP_REST_V1=true)"
+    REST_V1_PID=""
+else
+    echo "Starting rest-v1 on port $REST_V1_PORT..."
+    cd "$REST_V1_DIR_ABS"
+    if [ -n "$REST_V1_START_COMMAND" ]; then
+        echo "Using custom start command: $REST_V1_START_COMMAND"
+        PORT=$REST_V1_PORT eval $REST_V1_START_COMMAND > "$TMP_DIR/rest-v1.log" 2>&1 &
+    else
+        PORT=$REST_V1_PORT ./start.sh > "$TMP_DIR/rest-v1.log" 2>&1 &
+    fi
+    REST_V1_PID=$!
+    echo "REST v1 started (PID: $REST_V1_PID)"
+    sleep 2
+fi
+
+# Start rest-v2 in background
+if [ "${SKIP_REST_V2:-false}" = "true" ]; then
+    echo "⏭️  Skipping REST v2 (SKIP_REST_V2=true)"
+    REST_V2_PID=""
+else
+    echo "Starting rest-v2 on port $REST_V2_PORT..."
+    cd "$REST_V2_DIR_ABS"
+    if [ -n "$REST_V2_START_COMMAND" ]; then
+        echo "Using custom start command: $REST_V2_START_COMMAND"
+        PORT=$REST_V2_PORT eval $REST_V2_START_COMMAND > "$TMP_DIR/rest-v2.log" 2>&1 &
+    else
+        PORT=$REST_V2_PORT ./start.sh > "$TMP_DIR/rest-v2.log" 2>&1 &
+    fi
+    REST_V2_PID=$!
+    echo "REST v2 started (PID: $REST_V2_PID)"
+fi
+
+# Save PIDs
+cd "$SCRIPT_DIR"
+echo "$PROXY_PID" > "$TMP_DIR/proxy.pid"
+echo "$REST_V1_PID" > "$TMP_DIR/rest-v1.pid"
+echo "$REST_V2_PID" > "$TMP_DIR/rest-v2.pid"
+echo "$REST_EXTERNAL_USER_PID" > "$TMP_DIR/rest-external-user.pid"
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to initialize..."
@@ -136,6 +220,7 @@ sleep 5
 echo ""
 echo "🧪 Running comprehensive tests to capture v1 behavior..."
 echo "   (This may take a few minutes)"
+cd "$SCRIPT_DIR"
 ./run-reporter.sh "$CONFIG_FILE" --max-failures 0
 
 # Step 4: Verify recordings were created
@@ -157,3 +242,5 @@ fi
 echo ""
 echo "🎯 Ready for development! The workflow is now initialized."
 echo "   All v1 behavior has been recorded and you can start fixing v2 endpoints."
+echo "   Services are still running - use ./remove.sh to stop them"
+echo ""
