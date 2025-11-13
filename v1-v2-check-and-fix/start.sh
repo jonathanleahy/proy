@@ -141,29 +141,37 @@ echo "Starting with fresh reports, preserving existing recordings"
 ../utils/add-target.sh "$REST_V1_CONFIG" add
 ../utils/add-target.sh "$REST_V2_CONFIG" add
 
-# Rebuild rest-v1 after modifying source
-echo "Rebuilding rest-v1 with proxy configuration..."
-cd "$REST_V1_DIR"
-if eval $REST_V1_BUILD_COMMAND 2>&1 | tee "$TMP_DIR/rest-v1-build.log"; then
-    echo "✅ REST v1 build successful"
+# Rebuild rest-v1 after modifying source (unless skip flag is set)
+if [ "${SKIP_BUILD_REST_V1:-false}" = "true" ]; then
+    echo "⏭️  Skipping REST v1 build (SKIP_BUILD_REST_V1=true)"
 else
-    echo "❌ REST v1 build failed! Check tmp/rest-v1-build.log for details"
-    tail -20 "$TMP_DIR/rest-v1-build.log"
-    exit 1
+    echo "Rebuilding rest-v1 with proxy configuration..."
+    cd "$REST_V1_DIR"
+    if eval $REST_V1_BUILD_COMMAND 2>&1 | tee "$TMP_DIR/rest-v1-build.log"; then
+        echo "✅ REST v1 build successful"
+    else
+        echo "❌ REST v1 build failed! Check tmp/rest-v1-build.log for details"
+        tail -20 "$TMP_DIR/rest-v1-build.log"
+        exit 1
+    fi
+    cd "$SCRIPT_DIR"
 fi
-cd "$SCRIPT_DIR"
 
-# Rebuild rest-v2 if needed
-echo "Rebuilding rest-v2 with proxy configuration..."
-cd "$REST_V2_DIR"
-if go build -o rest-v2 "$REST_V2_BUILD_PATH" 2>&1 | tee "$TMP_DIR/rest-v2-build.log"; then
-    echo "✅ REST v2 build successful"
+# Rebuild rest-v2 if needed (unless skip flag is set)
+if [ "${SKIP_BUILD_REST_V2:-false}" = "true" ]; then
+    echo "⏭️  Skipping REST v2 build (SKIP_BUILD_REST_V2=true)"
 else
-    echo "❌ REST v2 build failed! Check tmp/rest-v2-build.log for details"
-    tail -20 "$TMP_DIR/rest-v2-build.log"
-    exit 1
+    echo "Rebuilding rest-v2 with proxy configuration..."
+    cd "$REST_V2_DIR"
+    if go build -o rest-v2 "$REST_V2_BUILD_PATH" 2>&1 | tee "$TMP_DIR/rest-v2-build.log"; then
+        echo "✅ REST v2 build successful"
+    else
+        echo "❌ REST v2 build failed! Check tmp/rest-v2-build.log for details"
+        tail -20 "$TMP_DIR/rest-v2-build.log"
+        exit 1
+    fi
+    cd "$SCRIPT_DIR"
 fi
-cd "$SCRIPT_DIR"
 
 # Convert relative paths to absolute paths
 PROXY_DIR_ABS="$(realpath "$PROXY_DIR")"
