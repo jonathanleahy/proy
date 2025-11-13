@@ -312,7 +312,16 @@ if [ "$ALL_RUNNING" = false ]; then
     echo ""
     echo "=== REST v2 log ==="
     tail -10 tmp/rest-v2.log 2>/dev/null || echo "No log available"
-    exit 1
+    echo ""
+
+    # Check if we should exit or continue
+    if [ "${STRICT_SERVICE_CHECK:-true}" = "true" ]; then
+        echo "❌ Exiting due to service failures (set STRICT_SERVICE_CHECK=false in env to continue anyway)"
+        exit 1
+    else
+        echo "⚠️  Continuing anyway (STRICT_SERVICE_CHECK=false)"
+        echo "   Services that are running will work, others may fail during tests"
+    fi
 fi
 
 echo "🎉 All services started successfully!"
