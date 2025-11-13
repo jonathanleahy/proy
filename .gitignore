@@ -41,6 +41,8 @@ Thumbs.db
 *.obj
 *.fb
 proxy-bin
+rest-v2
+rest-external-user
 /reporter/reporter
 /v1-v2-check-and-fix/reporter
 

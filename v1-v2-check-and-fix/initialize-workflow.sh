@@ -69,6 +69,20 @@ else
     echo "   ⚠️  REST v2 source not found at $REST_V2_DIR (skipping)"
 fi
 
+# Build rest-external-user binary
+echo "📦 Building rest-external-user binary..."
+if [ -f "$REST_EXTERNAL_USER_DIR/go.mod" ]; then
+    (cd "$REST_EXTERNAL_USER_DIR" && go build -o rest-external-user ./cmd/server)
+    if [ $? -eq 0 ]; then
+        echo "   ✅ REST external-user binary built successfully"
+    else
+        echo "   ❌ Failed to build rest-external-user binary"
+        exit 1
+    fi
+else
+    echo "   ⚠️  REST external-user source not found at $REST_EXTERNAL_USER_DIR (skipping)"
+fi
+
 # Install Node.js dependencies for rest-v1
 echo "📦 Installing Node.js dependencies for rest-v1..."
 if [ -f "$REST_V1_DIR/package.json" ]; then

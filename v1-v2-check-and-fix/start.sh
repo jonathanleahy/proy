@@ -67,6 +67,20 @@ if [ ! -f "$PROXY_BIN" ] || [ "$PROXY_BIN" -ot "$PROXY_BIN_DIR/cmd/proxy/main.go
     fi
 fi
 
+# Build rest-external-user binary (if not already built or source changed)
+REST_EXTERNAL_USER_BIN="$REST_EXTERNAL_USER_DIR/rest-external-user"
+if [ ! -f "$REST_EXTERNAL_USER_BIN" ] || [ "$REST_EXTERNAL_USER_BIN" -ot "$REST_EXTERNAL_USER_DIR/cmd/server/main.go" ]; then
+    echo "Building rest-external-user binary..."
+    if [ -f "$REST_EXTERNAL_USER_DIR/go.mod" ]; then
+        (cd "$REST_EXTERNAL_USER_DIR" && go build -o rest-external-user ./cmd/server)
+        if [ $? -ne 0 ]; then
+            echo "❌ Failed to build rest-external-user binary"
+            exit 1
+        fi
+        echo "✅ REST external-user binary built"
+    fi
+fi
+
 # Install Node.js dependencies if needed
 if [ -f "$REST_V1_DIR/package.json" ]; then
     if [ ! -d "$REST_V1_DIR/node_modules" ]; then
