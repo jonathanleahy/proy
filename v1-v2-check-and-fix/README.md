@@ -47,6 +47,34 @@ Results are saved in `reports/` with timestamps. Recordings are in `recordings/`
 - [TESTING-WORKFLOW.md](TESTING-WORKFLOW.md) - Detailed workflow documentation
 - [FIX-PROCESS.md](FIX-PROCESS.md) - Systematic process for fixing each failing endpoint (branch → test → fix → verify)
 
+## Multi-Machine Configuration
+
+The project supports OS-specific configuration files for working across different machines:
+
+**Auto-Detection (Recommended):**
+- Linux: Uses `env.linux` automatically
+- macOS: Uses `env.darwin` automatically
+- Fallback: Uses `env` if OS-specific file not found
+
+**Setup:**
+```bash
+# On Linux machine
+cp env.example env.linux
+# Edit env.linux with your Linux paths
+
+# On Mac machine
+cp env.example env.darwin
+# Edit env.darwin with your Mac paths
+```
+
+**Files:**
+- `env.linux` - Linux-specific configuration (tracked in git)
+- `env.darwin` - macOS-specific configuration (tracked in git)
+- `env` - Generic fallback (gitignored, created from env.example)
+- `env.example` - Template for new environments
+
+All scripts automatically detect your OS and load the appropriate config. No manual switching needed!
+
 ## Configuration for Different APIs
 
 Edit `start.sh` to point to your APIs:

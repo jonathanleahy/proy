@@ -4,15 +4,23 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Load environment variables from env file
-if [ -f "$SCRIPT_DIR/env" ]; then
-    set -a  # automatically export all variables
-    source "$SCRIPT_DIR/env"
-    set +a  # disable automatic export
+# Load environment variables from OS-specific env file
+OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
+ENV_FILE=""
+
+if [ -f "$SCRIPT_DIR/env.$OS_NAME" ]; then
+    ENV_FILE="$SCRIPT_DIR/env.$OS_NAME"
+elif [ -f "$SCRIPT_DIR/env" ]; then
+    ENV_FILE="$SCRIPT_DIR/env"
 else
-    echo "Error: env file not found. Please copy env.example to env and configure."
+    echo "Error: No env file found for $OS_NAME"
+    echo "Please create one of: env.$OS_NAME, env (copy from env.example)"
     exit 1
 fi
+
+set -a  # automatically export all variables
+source "$ENV_FILE"
+set +a  # disable automatic export
 
 # Configuration
 TEST_CONFIG="${1:-$SCRIPT_DIR/$CONFIG_FILE}"

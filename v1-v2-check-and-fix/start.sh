@@ -8,15 +8,26 @@ cd "$SCRIPT_DIR"
 CLI_PROXY_MODE="${PROXY_MODE:-}"
 CLI_CLEAN_RECORDINGS="${CLEAN_RECORDINGS:-}"
 
-# Load environment variables from env file
-if [ -f "$SCRIPT_DIR/env" ]; then
-    set -a  # automatically export all variables
-    source "$SCRIPT_DIR/env"
-    set +a  # disable automatic export
+# Load environment variables from OS-specific env file
+# Tries in order: env.<os> (e.g., env.linux, env.darwin), then env, then env.example
+OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
+ENV_FILE=""
+
+if [ -f "$SCRIPT_DIR/env.$OS_NAME" ]; then
+    ENV_FILE="$SCRIPT_DIR/env.$OS_NAME"
+    echo "Using OS-specific config: env.$OS_NAME"
+elif [ -f "$SCRIPT_DIR/env" ]; then
+    ENV_FILE="$SCRIPT_DIR/env"
+    echo "Using default config: env"
 else
-    echo "Error: env file not found. Please copy env.example to env and configure."
+    echo "Error: No env file found for $OS_NAME"
+    echo "Please create one of: env.$OS_NAME, env (copy from env.example)"
     exit 1
 fi
+
+set -a  # automatically export all variables
+source "$ENV_FILE"
+set +a  # disable automatic export
 
 # Make paths relative to SCRIPT_DIR
 RECORDINGS_DIR="$SCRIPT_DIR/$RECORDINGS_DIR"
