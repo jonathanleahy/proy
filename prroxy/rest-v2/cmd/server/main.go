@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	httpAdapter "github.com/jonathanleahy/prroxy/rest-v2/internal/adapters/inbound/http"
 	"github.com/jonathanleahy/prroxy/rest-v2/internal/domain/health"
-	"github.com/jonathanleahy/prroxy/rest-v2/internal/domain/user"
 )
 
 const version = "2.0.0"
@@ -36,23 +35,12 @@ func setupRouter() *gin.Engine {
 
 	// Domain layer: Create services (business logic)
 	healthService := health.NewService(version)
-	userService := user.NewService()
 
 	// Adapter layer: Create HTTP handlers (depend on services through ports)
 	healthHandler := httpAdapter.NewHealthHandler(healthService)
-	userHandler := httpAdapter.NewUserHandler(userService)
 
 	// Route configuration
 	router.GET("/health", healthHandler.GetHealth)
-
-	// API routes
-	api := router.Group("/api")
-	{
-		// User endpoints
-		api.GET("/user/:id", userHandler.GetUser)
-		api.GET("/user/:id/summary", userHandler.GetUserSummary)
-		api.POST("/user/:id/report", userHandler.PostUserReport)
-	}
 
 	return router
 }
