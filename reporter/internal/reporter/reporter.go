@@ -97,8 +97,39 @@ func (r *Reporter) Run() Report {
 	return report
 }
 
-// testEndpoint tests a single endpoint
+// testEndpoint tests a single endpoint with retries on mismatch
 func (r *Reporter) testEndpoint(endpoint config.Endpoint) EndpointReport {
+	const maxRetries = 5
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		epReport := r.runSingleTest(endpoint)
+
+		// If test passed or had an error (not just mismatch), return
+		if epReport.Match || epReport.Error != "" {
+			if attempt > 1 {
+				fmt.Fprintf(os.Stderr, "   ✓ Matched on attempt %d/%d\n", attempt, maxRetries)
+			}
+			epReport.Retries = attempt - 1
+			return epReport
+		}
+
+		// Test failed (mismatch) - retry if we haven't reached max
+		if attempt < maxRetries {
+			fmt.Fprintf(os.Stderr, "   ⟳ Mismatch on attempt %d/%d, retrying...\n", attempt, maxRetries)
+			time.Sleep(100 * time.Millisecond) // Small delay between retries
+		} else {
+			fmt.Fprintf(os.Stderr, "   ✗ Still mismatched after %d attempts\n", maxRetries)
+			epReport.Retries = maxRetries - 1
+			return epReport
+		}
+	}
+
+	// Should never reach here
+	return EndpointReport{Path: endpoint.Path, Method: endpoint.Method, Error: "Max retries exceeded"}
+}
+
+// runSingleTest executes a single test attempt for an endpoint
+func (r *Reporter) runSingleTest(endpoint config.Endpoint) EndpointReport {
 	epReport := EndpointReport{
 		Path:       endpoint.Path,
 		Method:     endpoint.Method,

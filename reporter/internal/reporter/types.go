@@ -22,6 +22,7 @@ type EndpointReport struct {
 	Method        string
 	Match         bool
 	Iterations    int
+	Retries       int // Number of retry attempts before success/failure
 	V1Timings     []time.Duration
 	V2Timings     []time.Duration
 	V1AvgTime     time.Duration
