@@ -99,7 +99,7 @@ func (r *Reporter) Run() Report {
 
 // testEndpoint tests a single endpoint with retries on mismatch
 func (r *Reporter) testEndpoint(endpoint config.Endpoint) EndpointReport {
-	const maxRetries = 5
+	const maxRetries = 3
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		epReport := r.runSingleTest(endpoint)
